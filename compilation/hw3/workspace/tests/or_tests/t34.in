@@ -1,0 +1,3 @@
+int foo(bool a){
+return a;
+}

@@ -1,0 +1,7 @@
+1 STRING saifun
+2 STRING escape\n
+3 STRING bla\r
+4 STRING oh\t
+5 STRING I Am \\
+6 STRING ASCIIIIII \0343
+Error undefined escape sequence p

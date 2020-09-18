@@ -1,0 +1,143 @@
+%{
+	
+	#include <iostream>
+	using namespace std;
+
+
+	// struct Node{
+	// 	virtual std::string prettyPrint();
+	// };
+
+	// class Num : public Node {
+
+	// };
+
+	// class Add : public Node {
+
+	// };
+
+	#define YYSTYPE Node*
+	int yylex();
+	void yyerror(cons char*);
+%}
+
+%token ASSIGN
+%left RELOP_EQ
+%nonassoc RELOP
+%left BINOP_PM
+%left BINOP_MD
+
+%token VOID
+%token INT
+%token BYTE
+%token B
+%token BOOL
+%token AND
+%token OR
+%token NOT
+%token TRUE
+%token FALSE
+%token RETURN
+%token IF
+%token ELSE
+%token WHILE
+%token BREAK
+%token CONTINUE
+%token PRECOND
+%token SC
+%token COMMA
+%token LPAREN //left to right?
+%token RPAREN // left to right?
+%token LBRACE
+%token RBRACE
+%token ID
+%token NUM
+%token STRING
+%token EF 
+
+%%
+
+program:	funcs
+;
+funcs:	funcdecl funcs
+		| /* epsilon */ 
+;
+funcdecl: retype ID LPAREN formals RPARENT preconditions LBRACE statements RBRACE
+;
+retype: type
+		| VOID
+		;
+formals: formalslist
+		| /*epsilon*/
+;
+formalslist: formaldecl
+			| formaldecl COMMA formalslist
+;
+formaldecl: type ID
+;
+preconditions: preconditions precondition
+				| /*epsilon*/
+;
+precondition: PRECOND LPAREN exp RPAREN
+;
+statements: statement
+			| statements statement
+			;
+
+statement: open_statement
+		| closed_statement
+;
+open_statement: IF LPAREN exp RPAREN simple_statement
+				| IF LPAREN exp RPAREN open_statement
+				| IF LPAREN exp RPAREN closed_statement ELSE open_statement
+				| WHILE LPAREN exp RPAREN open_statement
+;
+closed_statement: simple_statement
+				| IF LPAREN exp RPAREN closed_statement ELSE closed_statement
+				| WHILE LPAREN exp RPAREN closed_statement
+;
+simple_statement: LBRACE statements RBRACE
+				| type ID SC
+				| type ID ASSIGN exp SC
+				| ID ASSIGN exp SC
+				| Call SC
+				| RETURN SC
+				| RETURN exp SC
+				| BREAK SC
+				| CONTINUE SC
+;
+call: ID LPAREN explist RPAREN
+	| ID LPAREN RPAREN
+;
+explist: exp
+		| exp COMMA explist
+;
+type: INT
+	| BYTE
+	| BOOL
+;
+exp: LPAREN exp RPAREN
+	| exp BINOP exp
+	| ID
+	| call
+	| NUM
+	| NUM B
+	| STRING
+	| TRUE
+	| FALSE
+	| NOT exp
+	| exp AND exp
+	| exp OR exp
+	| exp RELOP exp
+;
+
+%%
+
+void yyerror(const char*) {
+	cout << "syntax error" << endl;
+}
+
+int main(){
+	return yyparse();
+}
+

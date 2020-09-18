@@ -1,0 +1,11 @@
+void test(bool bin, byte in)
+@pre(bin)
+@pre(in >= 1)
+{
+    return;
+}
+void main() {
+	int m = 1;
+	bool n = true;
+	test();
+}

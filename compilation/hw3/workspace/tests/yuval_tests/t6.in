@@ -1,0 +1,9 @@
+void main(){
+  int x;
+}
+void checkByte(){
+  byte x;
+  byte z = 6 b;
+  byte y = 19;
+  y = z;
+}

@@ -1,0 +1,8 @@
+table.itemstore_table a.nostylebutton:link:hover
+{
+    text-decoration: none;
+    color: rgb(245, 214, 93);
+	top: .200px;
+	left: 300em;
+	width: 00100%;
+}

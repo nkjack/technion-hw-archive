@@ -1,0 +1,14 @@
+int a(){
+return 4;
+}
+int foo(){
+return 7;
+}
+void main(){
+{
+int c = a();
+{
+int d = a();
+}
+}
+}

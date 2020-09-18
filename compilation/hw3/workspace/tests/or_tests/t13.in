@@ -1,0 +1,7 @@
+int a(int c){
+return 3;
+}
+
+void main(){
+int c = a("abc");
+}

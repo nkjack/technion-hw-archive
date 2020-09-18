@@ -1,0 +1,14 @@
+// bool function in if
+bool checkOk(bool isOk) {
+    return isOk;
+}
+
+void main()
+{
+    int x = 4;
+    byte y = 100 b;
+    if (checkOk(x > y)) {
+        x = x + 1;
+    }
+    int z;
+}

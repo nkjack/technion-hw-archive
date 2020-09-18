@@ -1,0 +1,10 @@
+void main(){
+  int x;
+}
+
+int checkFuncDecl(int a,bool x,byte z,byte p)
+@pred(x)
+@pre(p >= 1)
+{
+  int k;
+}

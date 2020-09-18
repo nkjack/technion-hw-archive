@@ -1,0 +1,11 @@
+int foo(int c){
+return 3;
+}
+
+int boo(){
+return foo(foo(3));
+}
+
+void main(){
+return;
+}

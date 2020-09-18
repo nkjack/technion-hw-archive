@@ -1,0 +1,19 @@
+void foo(int a)
+@pre(a > 0 and a < 15)
+{
+	print("OK\n");
+}
+void maxTestsDefineThenAssign() {
+	int x;
+	x = 5;
+	printi(x);
+	print("\n");
+	x = 7;
+	printi(x);
+}
+
+void main() {
+	 foo(1);
+     maxTestsDefineThenAssign();
+     print("\nI hate this course\n");
+}

@@ -1,0 +1,19 @@
+//arithmetic
+void main() {
+	printi(8);
+	print("\n");
+	printi(150b);
+	print("\n");
+	printi(1+2+3+1);
+	print("\n");
+	printi(120b-50b-1b-7b);
+	print("\n");
+	printi(10-2*3+1);
+	print("\n");
+	printi(1338-8);
+	print("\n");
+	printi(10/2);
+	print("\n");
+	printi(1+400/3b);
+	print("\n");
+}

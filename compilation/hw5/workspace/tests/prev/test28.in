@@ -1,0 +1,14 @@
+int Func(int x) {
+	printi(x);
+	print("\n");
+	return x;
+}
+void maxTestsTestReturnPrint() {
+	int t = Func(3) + 3;
+	printi(t);
+}
+
+void main() {
+     maxTestsTestReturnPrint();
+     print("\nI hate this course\n");
+}

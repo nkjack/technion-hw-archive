@@ -1,0 +1,5 @@
+void main(){
+bool a = true;
+bool c = 3==4;
+if (c) printi(7);
+}

@@ -1,0 +1,9 @@
+int returnNum(bool x) 
+@pre(x)
+{
+    return 42;
+}
+
+void main() {
+    returnNum(false);
+}

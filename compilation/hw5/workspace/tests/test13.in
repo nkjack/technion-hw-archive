@@ -1,0 +1,36 @@
+
+bool isGreater(int x,int y,bool flag)
+@pre(flag)
+@pre(flag and not not flag and (x >= y))
+{
+	return true;
+}
+void TestFunc(bool flag) 
+@pre(not flag)
+{
+	int x=5;
+	{
+		int y;
+		{
+			int z = x;
+		}
+		y = x*x;
+
+		while(true) {
+			printi(y);
+			print("\n");
+			if(isGreater(y,x,not flag)){
+					y =y- x;
+					continue;
+			}
+			else
+				break;
+		}
+				
+				
+	}
+}
+
+void main() {
+	TestFunc(false);
+}

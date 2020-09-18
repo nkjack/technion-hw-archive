@@ -1,0 +1,22 @@
+bool preFunc(int x, int y)
+@pre (x >= 1)
+@pre(y >= 1)
+{
+    return x < y;
+}
+
+int return6()
+@pre(preFunc(1, 2))
+{
+    return 6;
+}
+
+void main() {
+    bool c = true;
+    if (not c) {
+        int x = 6;
+        printi(x);
+    }
+    else
+        syntax error;
+}

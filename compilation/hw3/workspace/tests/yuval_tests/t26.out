@@ -1,0 +1,6 @@
+---end scope---
+main - 0 preconditions
+x INT 0
+---end scope---
+z INT 2
+line 13: variable z is not defined

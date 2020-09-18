@@ -1,0 +1,14 @@
+1 NAME doubl
+1 COLON :
+1 NAME e
+1 COLON :
+1 COLON :
+1 NAME s
+1 LBRACE {
+2 NAME important
+2 COLON :
+2 IMPORTANT !important
+3 IMPORTANT !
+	important
+3 SEMICOLON ;
+4 RBRACE }

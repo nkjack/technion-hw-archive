@@ -1,0 +1,20 @@
+void Func(int i, int k, byte c) {
+	printi(i);
+	print("\n");
+	printi(k);
+	print("\n");
+	printi(c);
+}
+void maxTestsPassMultipleParametersToFunc() {
+	int t = 33;
+	byte s = 3b;
+	Func(8 + 2, t, s + 8b);
+	print("\n");
+	Func(14, t, s + 8b);
+}
+
+
+void main() {
+     maxTestsPassMultipleParametersToFunc();
+     print("\nI hate this course\n");
+}

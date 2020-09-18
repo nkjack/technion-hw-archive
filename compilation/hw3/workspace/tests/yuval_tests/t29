@@ -1,0 +1,4 @@
+---end scope---
+main - 0 preconditions
+x INT 0
+line 7: prototype mismatch, function checkFuncCall expects arguments (INT,BOOL,BYTE,BYTE)

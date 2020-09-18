@@ -1,0 +1,3 @@
+void main() {
+	print("noam is the king\n");
+}

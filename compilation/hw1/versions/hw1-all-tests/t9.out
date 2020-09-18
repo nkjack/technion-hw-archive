@@ -1,0 +1,26 @@
+1 NAME div
+1 LBRACKET [
+1 NAME class
+1 RBRACKET ]
+1 COLON :
+1 NAME strings
+1 LBRACE {
+2 NAME string1
+2 COLON :
+2 STRING hE LLo
+2 SEMICOLON ;
+3 NAME string2
+3 COLON :
+3 STRING w\6frld
+3 SEMICOLON ;
+4 NAME string3
+4 COLON :
+4 STRING hello "world"
+4 SEMICOLON ;
+5 NAME string4
+5 COLON :
+5 STRING hello? 'world'
+5 SEMICOLON ;
+6 NAME string5
+6 COLON :
+Error undefined escape sequence '

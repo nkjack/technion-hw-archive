@@ -1,0 +1,20 @@
+
+void foo(int a, int c)
+@pre(a > 0 and c > 0)
+@pre(a < 10) 
+{
+	print("OK\n");
+}
+
+void foo2(int a, int c)
+@pre(a > 0 and c > 7)
+@pre(a < 10) 
+{
+	print("OK2\n");
+}
+
+
+void main() {
+	foo(5, 7);
+	foo2(11, 7);
+}

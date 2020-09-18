@@ -1,0 +1,10 @@
+/* Main CSS */
+
+table ~ div#first img:hover table.colorful > input[type="text"]
+{
+    text-align: center;
+    background: white '../Images/BehindBG2.png' fixed;
+    color: rgb( 197 , 90 , 17 );
+}
+
+/* End of /* the main */ CSS file */

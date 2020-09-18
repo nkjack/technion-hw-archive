@@ -1,0 +1,13 @@
+//whiles
+void main() {
+	while(false) {
+		print("never gonna happen hopefully\n");
+	}
+	
+	int i = 0;
+	while(i < 10) {
+		printi(i);
+		print("\n");
+		i = i + 1;
+	}
+}

@@ -1,0 +1,7 @@
+void foo(byte c){
+return;
+}
+
+void main(){
+foo(255b);
+}

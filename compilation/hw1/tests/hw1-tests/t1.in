@@ -1,0 +1,6 @@
+@import '../styles/main.css'
+
+label:hover:after {
+	content: 'Hello \57orld!\r\nThis\tis\t\63oo\00006C, as a\C0always.';
+	font: 15px "\Calibri" ! important;
+}

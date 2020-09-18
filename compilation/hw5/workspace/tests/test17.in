@@ -1,0 +1,17 @@
+//negatives and overflow
+void main() {
+	printi(0-6);
+	print("\n");
+	printi(0b-2);
+	print("\n");
+	printi(0b-5b);
+	print("\n");
+	printi(2147483647 + 2);
+	print("\n");
+	printi(214748365 * 10b);
+	print("\n");
+	printi(255b + 2b);
+	print("\n");
+	printi(128b * 2b);
+	print("\n");
+}

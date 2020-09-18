@@ -1,0 +1,7 @@
+
+for file in `ls amit_tests/ | grep in | cut -d"." -f1`; do
+	echo Running test for $file
+	./hw3 < amit_tests/${file}.in > amit_tests/${file}
+	diff amit_tests/$file amit_tests/${file}.out
+	echo \*\*\* DONE \*\*\*
+done

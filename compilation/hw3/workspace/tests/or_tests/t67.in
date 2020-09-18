@@ -1,0 +1,9 @@
+void main(){
+int a =4;
+{
+int c = 4;
+{
+int a;
+}
+}
+}

@@ -1,0 +1,9 @@
+---end scope---
+main - 0 preconditions
+x INT 0
+---end scope---
+z INT 2
+---end scope---
+y INT 1
+z INT 2
+line 16: variable y is not defined

@@ -1,0 +1,5 @@
+@import good_comments
+/* this is a good / * / comment */
+@import 'bad comments'
+/* this is a bad * /*/ comment */
+selector{ some: stuff; }

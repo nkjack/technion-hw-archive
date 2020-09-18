@@ -1,0 +1,1385 @@
+%{
+
+	#include "rana.hpp"
+	#include "output.hpp"
+	#include "bp.hpp"
+	#include "Registers.h"
+	#include <stdlib.h>
+	#include <stdio.h>
+	#include <vector>
+	#include <map>
+	#include <string>
+	#include <cstring>
+	#include <algorithm>
+	#include <sstream>
+  
+  int yylex();
+  extern int yylineno;
+  void prepareParameterTypes(vector<string> * types);
+  int linecounter = 0;
+  void yyerror(const char*);
+  void insert(const char*, const char* , int);
+  const char* getType(const char* name);
+  bool isDeclared(const char*);
+  void openScope();
+  void closeScope(int scopeType);
+  vector<string>* getTypes(const char * id);
+  bool sameTypes(vector<string>*,vector<string>*);
+	vector<map<string, ID_Node> > symbols_table;
+  vector<int> offsets;
+  vector<vector<struct_info> > structs_defined;
+  vector<function_info> functions_defined;
+  bool vector_init = false;
+  void printDebug();
+  int indexer=0;
+  bool typeDefined(const char* typeDesired, int scope);
+  bool typeDefinedAnywhere(const char* typeDesired);
+  char* getFunctionRetType(const char* func);
+  bool functionExists(const char* func);
+  const char* typeDefinedinParentScopes(const char * actual, const char * typeDesired, const char* field);
+  bool inWhile = false;
+  bool mainAquired = false;
+  const char* retrieveStructType(const char* name);
+  int getStructSize(const char* name);
+  using namespace output;
+  
+  void emitPrints();
+  RegistersScopes regs;
+  std::string its(int num);
+  int getOffset(const char*);
+  int getIndexInStruct(const char*, const char*);
+  const char* getTypeOfField(const char*, int);
+  
+ #define YYDEBUG 1
+%}
+
+%token<id>  STRUCT TRUE FALSE BREAK CONTINUE RETURN WHILE COMMA SC EF
+%token<type> ID NUM STRING
+%right IF 
+%right ELSE
+
+%nonassoc VOID INT BYTE BOOL B
+%right ASSIGN //1
+%left OR //3
+%left AND //4
+%nonassoc<op> RELOP //9
+%left<op> PLUSMINUS //11
+%left<op> BINOP //12
+%right NOT //14
+%left PERIOD //16
+%right LPAREN RPAREN LBRACE RBRACE //16
+
+%type<struct_types> StructType;
+%type<exp> Exp;
+%type<type> Type;
+%type<statement> Statement;
+%type<statement> Statements;
+%type<statement> NBP;
+%type<type>  RetType;
+%type<explist_types> ExpList;
+%type<type>  NoSR;
+%type<exp>  NoSR2;
+%type<exp> Call;
+%type<bp_label> MBP
+
+%%
+Program			:	MI Structs Funcs EF             {
+                                                if(!mainAquired) 
+                                                {
+                                                  errorMainMissing();
+                                                  exit(1);
+                                                } 
+                                                closeScope(0); 														
+                                                CodeBuffer::instance().printDataBuffer();
+                																CodeBuffer::instance().printCodeBuffer(); 
+                                                exit(0); 
+                                              }
+;
+
+MI           :                               {
+                                                openScope(); 
+                                                function_info printFunc; 
+                                                printFunc.param_names = new vector<string>();
+                                                printFunc.param_names->push_back("val");
+                                                printFunc.param_types = new vector<string>();
+                                                printFunc.param_types->push_back("STRING");
+                                                printFunc.name = "print";
+                                                printFunc.retType="VOID";
+                                                function_info printiFunc; 
+                                                printiFunc.param_names = new vector<string>();
+                                                printiFunc.param_names->push_back("val");
+                                                printiFunc.param_types = new vector<string>();
+                                                printiFunc.param_types->push_back("INT"); 
+                                                printiFunc.name = "printi"; 
+                                                printiFunc.retType="VOID";
+                                                functions_defined.push_back(printFunc);
+                                                functions_defined.push_back(printiFunc);
+                                                emitPrints();
+                                            }
+;
+
+M           :                               {
+                                                openScope();
+                                            }
+;
+Funcs			:	FuncDecl Funcs                  {
+                                              linecounter = yylineno;
+                                            }
+					| 
+;
+
+FuncDecl		:	                  RetType ID M           {
+                                                          if(isDeclared($2))
+                                                          {    
+                                                            errorDef(yylineno, $2);
+                                                            exit(1); 
+                                                          } 
+                                                          if(functionExists($2))
+                                                          {
+                                                            errorDef(yylineno, $2); 
+                                                            exit(1);
+                                                          }
+                                                          function_info newFunction; 
+                                                          newFunction.param_names = new vector<string>(); 
+                                                          newFunction.param_types = new vector<string>(); 
+                                                          newFunction.name = $2; 
+                                                          newFunction.retType = $1; 
+                                                          functions_defined.push_back(newFunction);
+														                             	CodeBuffer::instance().emit(std::string($2) + ":");
+                                                          CodeBuffer::instance().emit("addu $fp, $sp, 0");                                                                                  
+															                      	}
+																
+
+                           LPAREN Formals RPAREN LBRACE  {offsets.back() = 0;}Statements RBRACE {
+                                 if(strcmp($2,"main")==0 && strcmp($1,"VOID")==0 && functions_defined[functions_defined.size()-1].param_names->size() == 0) 
+                                 mainAquired = true;
+                                 closeScope(1);
+                                 CodeBuffer::instance().emit("addu $sp, $fp, 0");
+                                 CodeBuffer::instance().emit("li $v0, 0");
+																 CodeBuffer::instance().emit("jr $ra");
+                                 }
+;
+
+Structs			:	StructsDecl Structs           {
+                                              linecounter = yylineno;
+                                            }
+					| 
+;
+
+StructsDecl		:	NoSR LBRACE M2 StructMemList RBRACE SC {
+                                        structs_defined[structs_defined.size()-1][structs_defined[structs_defined.size()-1].size()-1].name = $1;
+                                                        }
+;
+
+M2            :                                { 
+                                                  struct_info newStruct; 
+                                                  newStruct.mem_names = new vector<string>(); 
+                                                  newStruct.mem_types = new vector<string>(); 
+                                                  structs_defined[structs_defined.size()-1].push_back(newStruct);
+                                                }
+;
+
+RetType			:	Type {$$ = $1;}
+					|VOID  {$$ ="VOID";}
+;
+
+Formals			:	FormalsList
+					|
+;
+
+FormalsList		:	FormalDecl
+					|FormalDecl COMMA FormalsList
+;
+
+FormalDecl		:	Type ID 
+          {
+            functions_defined[functions_defined.size()-1].param_types->push_back($1);
+            functions_defined[functions_defined.size()-1].param_names->push_back($2); 
+            insert($2, $1,1);
+          } 
+					| StructType ID 
+          {
+            if(!typeDefined($1.name,0)) 
+              { 
+                errorUndefStruct(yylineno,$1.name); 
+                exit(1);
+              }
+              functions_defined[functions_defined.size()-1].param_types->push_back($1.name);
+              functions_defined[functions_defined.size()-1].param_names->push_back($2);
+              insert($2, $1.name,1);} 
+;
+
+StructMemList	:	StructMem 
+					|StructMem StructMemList
+;
+
+StructMem		:	Type ID SC {if(std::find(structs_defined[structs_defined.size()-1][structs_defined[structs_defined.size()-1].size()-1].mem_names->begin(), structs_defined[structs_defined.size()-1][structs_defined[structs_defined.size()-1].size()-1].mem_names->end(), $2) != structs_defined[structs_defined.size()-1][structs_defined[structs_defined.size()-1].size()-1].mem_names->end()) {errorDef(yylineno, $2);exit(1);}structs_defined[structs_defined.size()-1][structs_defined[structs_defined.size()-1].size()-1].mem_names->push_back($2);structs_defined[structs_defined.size()-1][structs_defined[structs_defined.size()-1].size()-1].mem_types->push_back($1);}
+;
+
+Statements		:	Statements Statement 	{
+											//rana
+												if($1.bpbreak != NULL && $2.bpbreak != NULL){
+													$$.bpbreak = new vector<int>(CodeBuffer::instance().merge(*$1.bpbreak,*$2.bpbreak));
+													delete $1.bpbreak;
+													delete $2.bpbreak;
+												} else if($1.bpbreak == NULL){
+													$$.bpbreak = $2.bpbreak;
+												} else {
+													$$.bpbreak = $1.bpbreak;	
+												}
+												if($1.bpcontinue != NULL && $2.bpcontinue != NULL){
+													$$.bpcontinue = new vector<int>(CodeBuffer::instance().merge(*$1.bpcontinue,*$2.bpcontinue));
+													delete $1.bpcontinue;
+													delete $2.bpcontinue;
+												} else if($1.bpcontinue == NULL){
+													$$.bpcontinue = $2.bpcontinue;
+												} else {
+													$$.bpcontinue = $1.bpcontinue;	
+												}
+											}
+					|Statement 				{
+												//rana
+												$$.bpcontinue = $1.bpcontinue;
+												$$.bpbreak = $1.bpbreak;
+											}
+;
+
+NoSR      : STRUCT ID {if(isDeclared($2)){    errorDef(yylineno, $2);exit(1); } $$ = $2;}
+;
+M3        : {closeScope(2);}
+;
+
+NoSR2      :IF LPAREN Exp RPAREN M MBP Statement M3 {
+                                          $$.type = $3.type; 
+                                          $$.lineno = $3.lineno;
+                                          $$.truelist = $3.truelist;
+                                          $$.falselist =$3.falselist;
+                                          $$.label = $6.label;
+										  //rana
+										  $$.bpbreak = $7.bpbreak;
+										  $$.bpcontinue = $7.bpcontinue;
+										  
+                                          }
+;
+
+Statement	:LBRACE M Statements RBRACE     {
+                                                
+												//rana
+												        $$.bpcontinue = $3.bpcontinue;
+												        $$.bpbreak = $3.bpbreak;
+                                int current_offset = offsets.back();
+												        closeScope(2);
+																CodeBuffer::instance().emit("addu $sp, $sp, "+its(4 * (current_offset - offsets.back())));
+											}
+			|Type ID SC                     {
+                                                insert($2, $1,-1);
+                        CodeBuffer::instance().emit("sw $0, 0($sp)");
+												CodeBuffer::instance().emit("subu $sp, $sp, 4");
+												//rana
+												$$.bpcontinue = NULL;
+												$$.bpbreak = NULL;
+											}
+			|StructType ID SC               {
+                                                if(!typeDefinedAnywhere($1.name))
+                                                {
+                                                    errorUndefStruct(yylineno, $1.name);
+                                                    exit(1);
+                                                }
+                                                insert($2, $1.name,-1);
+                                                for(int i=0;i < getStructSize($1.name);i++){
+                                                    CodeBuffer::instance().emit("sw $0, 0($sp)");
+												    CodeBuffer::instance().emit("subu $sp, $sp, 4");
+                                                }
+                                                //rana
+												$$.bpcontinue = NULL;
+												$$.bpbreak = NULL;
+											}
+			|NoSR LBRACE M2 StructMemList RBRACE SC {
+														structs_defined[structs_defined.size()-1][structs_defined[structs_defined.size()-1].size()-1].name = $1; 
+														//rana
+														$$.bpcontinue = NULL;
+														$$.bpbreak = NULL; 
+													}
+			|Type ID ASSIGN Exp SC     			    {
+                  insert($2, $1,-1);
+                  if(strcmp($1, $4.type) != 0)
+                  {
+                    if(strcmp($1,"INT") != 0 || strcmp($4.type,"BYTE") !=0)
+                    {
+                      errorMismatch(yylineno); 
+                      exit(1);
+                    }
+                  }
+                  if (strcmp($4.type,"BOOL")!=0) 
+                  {
+                    int reg = $4.reg;
+                    CodeBuffer::instance().emit("sw $"+its(reg)+", 0($sp)");
+                    CodeBuffer::instance().emit("subu $sp, $sp, 4");
+                    regs.deallocReg(reg);
+                  }
+                  else if(strcmp(getType($2),"BOOL")==0){
+                    $4.reg = regs.allocReg();
+                    int offset = (-4) * getOffset($2);
+                    string false_label = CodeBuffer::instance().genLabel();
+                    CodeBuffer::instance().emit("li $"+its($4.reg)+", 0");
+                    std::vector<int> next_bp = CodeBuffer::instance().makelist(CodeBuffer::instance().emit("j "));
+                    string true_label = CodeBuffer::instance().genLabel();
+                    CodeBuffer::instance().emit("li $"+its($4.reg)+", 1"); 
+                    string next_label = CodeBuffer::instance().genLabel();
+                    CodeBuffer::instance().bpatch((*$4.truelist), true_label);
+                    CodeBuffer::instance().bpatch((*$4.falselist), false_label);
+                    CodeBuffer::instance().bpatch(next_bp, next_label);
+                    CodeBuffer::instance().emit("sw $"+its($4.reg)+", 0($sp)");
+                    CodeBuffer::instance().emit("subu $sp, $sp, 4");
+                    regs.deallocReg($4.reg);
+                    //rana
+                    $$.bpcontinue = NULL;
+                    $$.bpbreak = NULL;
+										}
+                                                    }
+			|StructType ID ASSIGN Exp SC            {
+                                                        if(!typeDefinedAnywhere($1.name))
+                                                        {
+                                                            errorUndefStruct(yylineno, $1.name);
+                                                            exit(1);
+                                                        }
+                                                        insert($2, $1.name,-1); 
+                                                        if(strcmp($1.name,$4.type) != 0)
+                                                        {
+                                                            errorMismatch(yylineno);
+                                                            exit(1);
+                                                        } 
+														//rana
+														$4.reg = regs.allocReg();
+															int second_offset = (getOffset($4.value)>=0) ? ((-4)* getOffset($4.value)) : ((-4)*(getOffset($4.value)+1) + getStructSize($4.type)*4);
+															for(int i=0;i<getStructSize($4.type);i++){
+																CodeBuffer::instance().emit("lw $"+its($4.reg)+", "+its(second_offset-i*4)+"($fp)");
+																CodeBuffer::instance().emit("sw $"+its($4.reg)+", "+its(0)+"($sp)");
+																CodeBuffer::instance().emit("subu $sp, $sp, 4");
+															}
+														regs.deallocReg($4.reg);
+                                                		//rana
+														$$.bpcontinue = NULL;
+														$$.bpbreak = NULL;            
+                                                    }
+					    |ID ASSIGN Exp SC           {
+														//rana
+                $$.bpcontinue = NULL;
+                $$.bpbreak = NULL;
+                if(!isDeclared($1))
+                {
+                  errorUndef(yylineno, $1);
+                  exit(1);
+                } 
+                if(!(strcmp(getType($1),$3.type)==0||(strcmp(getType($1),"INT")==0 && strcmp($3.type,"BYTE")==0)))
+                {
+                  errorMismatch(yylineno);
+                  exit(1);
+                }
+                if((strcmp(getType($1),"INT")==0 || strcmp(getType($1),"BYTE")==0)){
+                  int offset = (-4) * getOffset($1);
+                  CodeBuffer::instance().emit("sw $"+its($3.reg)+", "+its(offset)+"($fp)");
+                  regs.deallocReg($3.reg);
+                }
+                else if(strcmp(getType($1),"BOOL")==0){
+                $3.reg = regs.allocReg();
+                  int offset = (-4) * getOffset($1);
+                  string false_label = CodeBuffer::instance().genLabel();
+                  CodeBuffer::instance().emit("li $"+its($3.reg)+", 0");
+                  std::vector<int> next_bp = CodeBuffer::instance().makelist(CodeBuffer::instance().emit("j "));
+                  string true_label = CodeBuffer::instance().genLabel();
+                  CodeBuffer::instance().emit("li $"+its($3.reg)+", 1"); 
+                  string next_label = CodeBuffer::instance().genLabel();
+                  CodeBuffer::instance().bpatch((*$3.truelist), true_label);
+                  CodeBuffer::instance().bpatch((*$3.falselist), false_label);
+                  CodeBuffer::instance().bpatch(next_bp, next_label);
+                  CodeBuffer::instance().emit("sw $"+its($3.reg)+", "+its(offset)+"($fp)");
+                  regs.deallocReg($3.reg);
+                }
+                else{
+                  $3.reg = regs.allocReg();
+                  //rana								
+                  int first_offset = (getOffset($1) >=0) ? ((-4)*getOffset($1)) : ((-4)*(getOffset($1)+1) + getStructSize(retrieveStructType($1))*4);
+                  int second_offset = (getOffset($3.value)>=0) ? ((-4)* getOffset($3.value)) : ((-4)*(getOffset($3.value)+1) + getStructSize($3.type)*4);
+                  for(int i=0;i<getStructSize($3.type);i++){
+                  CodeBuffer::instance().emit("lw $"+its($3.reg)+", "+its(second_offset-i*4)+"($fp)");
+                  CodeBuffer::instance().emit("sw $"+its($3.reg)+", "+its(first_offset-i*4)+"($fp)");
+                }                                                                                                                                                       regs.deallocReg($3.reg);
+                }
+                        
+														
+                                                    }
+					|ID PERIOD ID ASSIGN Exp SC     {
+              if(!(strcmp(typeDefinedinParentScopes($1, retrieveStructType($1),$3),$5.type)==0 || (strcmp(typeDefinedinParentScopes($1,retrieveStructType($1),$3),"INT")==0 && strcmp($5.type,"BYTE")==0))) 
+              {
+                errorMismatch(yylineno); 
+                exit(1);
+              }
+              int offset;     
+              //cout << "offset is: " << getOffset($1) <<endl;
+              if(getOffset($1) >=0)
+                offset = (-4) * getOffset($1) - (4* getIndexInStruct(retrieveStructType($1),$3));
+              else
+              {
+                offset = (-4) * (getOffset($1)+1) + getStructSize(retrieveStructType($1))*4 - getIndexInStruct(retrieveStructType($1),$3)*4;
+              }
+              if(strcmp($5.type,"BOOL")==0)
+              {
+                $5.reg = regs.allocReg();
+                string false_label = CodeBuffer::instance().genLabel();
+                CodeBuffer::instance().emit("li $"+its($5.reg)+", 0");
+                std::vector<int> next_bp = CodeBuffer::instance().makelist(CodeBuffer::instance().emit("j "));
+                string true_label = CodeBuffer::instance().genLabel();
+                CodeBuffer::instance().emit("li $"+its($5.reg)+", 1"); 
+                string next_label = CodeBuffer::instance().genLabel();
+                CodeBuffer::instance().bpatch((*$5.truelist), true_label);
+                CodeBuffer::instance().bpatch((*$5.falselist), false_label);
+                CodeBuffer::instance().bpatch(next_bp, next_label);
+              }
+              CodeBuffer::instance().emit("sw $"+its($5.reg)+", "+its(offset)+"($fp)");
+              regs.deallocReg($5.reg);
+              //rana
+              $$.bpcontinue = NULL;
+              $$.bpbreak = NULL;
+                                                  }
+												  
+					|Call SC MBP {
+             regs.deallocReg($1.reg);
+											//rana
+						$$.bpcontinue = NULL;
+						$$.bpbreak = NULL;
+            if($1.truelist != NULL){
+            CodeBuffer::instance().bpatch((*$1.truelist), $3.label);
+            CodeBuffer::instance().bpatch((*$1.falselist), $3.label);
+            }
+            }
+					|RETURN SC {
+                      if(strcmp(functions_defined[functions_defined.size()-1].retType,"VOID") != 0)
+                      {
+                        errorMismatch(yylineno);
+                        exit(1);
+                      }
+											//rana
+						          $$.bpcontinue = NULL;
+						          $$.bpbreak = NULL;
+                      CodeBuffer::instance().emit("li $v0, 0");
+				              CodeBuffer::instance().emit("jr $ra");
+                    }
+					|RETURN Exp SC {
+						if(strcmp(functions_defined[functions_defined.size()-1].retType,$2.type) != 0 &&
+							!(strcmp(functions_defined[functions_defined.size()-1].retType,"INT")==0 &&
+							strcmp($2.type,"BYTE")==0))
+						{
+							errorMismatch(yylineno);
+							exit(1);
+						}
+						//rana
+						$$.bpcontinue = NULL;
+						$$.bpbreak = NULL;
+                                      if(strcmp($2.type,"BOOL")==0)
+                                        {
+                                          $2.reg = regs.allocReg();
+                                          string false_label = CodeBuffer::instance().genLabel();
+				                                  CodeBuffer::instance().emit("li $"+its($2.reg)+", 0");
+                                          std::vector<int> next_bp = CodeBuffer::instance().makelist(CodeBuffer::instance().emit("j "));
+                                          string true_label = CodeBuffer::instance().genLabel();
+																		      CodeBuffer::instance().emit("li $"+its($2.reg)+", 1"); 
+                                          string next_label = CodeBuffer::instance().genLabel();
+                                          CodeBuffer::instance().bpatch((*$2.truelist), true_label);
+                                          CodeBuffer::instance().bpatch((*$2.falselist), false_label);
+                                          CodeBuffer::instance().bpatch(next_bp, next_label);
+                                        }
+            CodeBuffer::instance().emit("move $v0, $"+its($2.reg));
+            CodeBuffer::instance().emit("jr $ra");
+            regs.deallocReg($2.reg);
+						}
+					|NoSR2 %prec IF     {
+                                            if(strcmp($1.type,"BOOL")!=0)
+                                            {
+                                              errorMismatch($1.lineno);
+                                              exit(1);
+                                            }
+											//rana
+                     CodeBuffer::instance().bpatch(*($1.truelist), $1.label);
+											CodeBuffer::instance().bpatch(*($1.falselist), CodeBuffer::instance().genLabel());
+   
+											$$.bpbreak = $1.bpbreak;
+											$$.bpcontinue = $1.bpcontinue;
+                                        }
+					|NoSR2 ELSE NBP M MBP Statement MBP
+										{
+											closeScope(2);	
+											if(strcmp($1.type,"BOOL")!=0)
+											{
+												errorMismatch($1.lineno);
+												exit(1);
+											}
+											//rana
+											if($1.bpbreak != NULL && $6.bpbreak != NULL){
+												$$.bpbreak = new vector<int>(CodeBuffer::instance().merge(*$1.bpbreak,*$6.bpbreak));
+												delete $1.bpbreak;
+												delete $6.bpbreak;
+											} else if($1.bpbreak == NULL){
+												$$.bpbreak = $6.bpbreak;
+											} else {
+												$$.bpbreak = $1.bpbreak;	
+											}
+											if($1.bpcontinue != NULL && $6.bpcontinue != NULL){
+												$$.bpcontinue = new vector<int>(CodeBuffer::instance().merge(*$1.bpcontinue,*$6.bpcontinue));
+												delete $1.bpcontinue;
+												delete $6.bpcontinue;
+											} else if($1.bpcontinue == NULL){
+												$$.bpcontinue = $6.bpcontinue;
+											} else {
+												$$.bpcontinue = $1.bpcontinue;	
+											}
+											CodeBuffer::instance().bpatch(*($1.truelist), $1.label);
+											CodeBuffer::instance().bpatch(*($1.falselist), $5.label);
+											CodeBuffer::instance().bpatch(*($3.next), $7.label);
+											
+										}
+					|WHILE {inWhile = true;} LPAREN MBP Exp RPAREN M MBP Statement NBP MBP
+										{
+											closeScope(2);
+											inWhile = false;
+											if(strcmp($5.type,"BOOL")!=0)
+											{
+												errorMismatch($5.lineno);
+												exit(1);
+											}
+											//rana -- CHECK NESTED LOOPS
+											CodeBuffer::instance().bpatch(*($5.truelist), $8.label);
+											CodeBuffer::instance().bpatch(*($5.falselist), $11.label);
+											CodeBuffer::instance().bpatch(*($10.next), $4.label);
+											if($9.bpbreak != NULL){
+												CodeBuffer::instance().bpatch(*($9.bpbreak), $11.label);
+											}
+											if($9.bpcontinue != NULL){
+												CodeBuffer::instance().bpatch(*($9.bpcontinue), $4.label);
+											}
+											$$.bpcontinue = NULL;
+											$$.bpbreak = NULL;
+										}
+					|BREAK SC 			{	
+											if(!inWhile)
+											{
+												errorUnexpectedBreak(yylineno);
+												exit(1);
+											}
+											//rana
+											$$.bpbreak = new vector<int>(CodeBuffer::instance().makelist(CodeBuffer::instance().emit("j ")));
+											$$.bpcontinue = NULL;
+										}
+					|CONTINUE SC 		{		
+											if(!inWhile)
+											{
+												errorUnexpectedContinue(yylineno);
+												exit(1);
+											}
+											//rana
+											$$.bpcontinue = new vector<int>(CodeBuffer::instance().makelist(CodeBuffer::instance().emit("j ")));
+											$$.bpbreak = NULL;
+										}
+;
+
+SAVE_MARKER:  {
+            regs.storeRegs();
+					  regs.storeFPRA();
+            }
+Call			:	ID SAVE_MARKER LPAREN ExpList RPAREN     {
+            vector_init = false;
+            if(!sameTypes(getTypes($1),$4.actual_types))
+            {
+              prepareParameterTypes(getTypes($1));
+              errorPrototypeMismatch(yylineno,$1,*getTypes($1));
+              exit(1);
+            }
+            if(!getFunctionRetType($1))
+            {
+              errorUndefFunc(yylineno,$1);
+              exit(1);
+            }
+            $$.type =getFunctionRetType($1);
+
+            CodeBuffer::instance().emit("addu $fp, $sp, 0");
+            CodeBuffer::instance().emit("jal "+std::string($1));
+            CodeBuffer::instance().emit("addu $sp, $fp, 0");
+            int counter = 0;
+            for(int i=0;i < $4.actual_types->size() ; i++){
+              if(strcmp($4.actual_types->at(i).c_str(), "INT") == 0 || strcmp($4.actual_types->at(i).c_str(), "BYTE") == 0 || strcmp($4.actual_types->at(i).c_str(), "BOOL") == 0 || strcmp($4.actual_types->at(i).c_str(), "STRING") == 0)
+              {
+                counter++;
+                continue;
+              }
+              counter+=getStructSize($4.actual_types->at(i).c_str());
+            }
+            CodeBuffer::instance().emit("addu $sp, $sp, "+its(counter*4));
+
+            regs.restoreRAFP();
+            regs.restoreRegs();
+            $$.reg = regs.allocReg();
+            CodeBuffer::instance().emit("addu $"+its($$.reg)+", $v0, 0");
+            if(strcmp($$.type, "BOOL")==0){
+              $$.falselist = new std::vector<int>(CodeBuffer::instance().makelist(CodeBuffer::instance().emit("beq $"+its($$.reg)+",0, ")));
+              $$.truelist =  new std::vector<int>(CodeBuffer::instance().makelist(CodeBuffer::instance().emit("j ")));
+              regs.deallocReg($$.reg);
+            }
+                                                    }
+					|ID SAVE_MARKER LPAREN RPAREN               {
+                                                         vector<string> test; 
+                                                         if(!sameTypes(getTypes($1),&test ))
+                                                         {
+                                                           prepareParameterTypes(getTypes($1));
+                                                           errorPrototypeMismatch(yylineno,$1,*getTypes($1));
+                                                           exit(1);
+                                                         }
+                                                         if(!getFunctionRetType($1))
+                                                         {
+                                                           errorUndefFunc(yylineno,$1);
+                                                           exit(1);
+                                                         }
+                                                         $$.type =getFunctionRetType($1);
+                                                         
+                                                        CodeBuffer::instance().emit("addu $fp, $sp, 0");
+                                                        CodeBuffer::instance().emit("jal "+std::string($1));
+                                                        CodeBuffer::instance().emit("addu $sp, $fp, 0");
+                                        
+                                                        regs.restoreRAFP();
+                                                        regs.restoreRegs();
+                             											      $$.reg = regs.allocReg();
+                        																CodeBuffer::instance().emit("addu $"+its($$.reg)+", $v0, 0");
+if(strcmp($$.type, "BOOL")==0){
+$$.falselist = new std::vector<int>(CodeBuffer::instance().makelist(CodeBuffer::instance().emit("beq $"+its($$.reg)+",0, ")));
+$$.truelist =  new std::vector<int>(CodeBuffer::instance().makelist(CodeBuffer::instance().emit("j ")));
+
+regs.deallocReg($$.reg);
+}
+                                                       }
+;
+
+        ExpList			:	Exp                                      {
+                                    if(!typeDefined($1.type,0))
+                                    { 
+                                      errorUndefStruct(yylineno,$1.type); 
+                                      exit(1);
+                                    }
+                                    if(!vector_init)
+                                    {
+                                      $$.actual_types = new vector<string>();
+                                      vector_init=true;
+                                    } 
+                                    $$.actual_types->push_back($1.type);
+                                    if(strcmp($1.type, "INT") == 0 || strcmp($1.type, "BYTE")==0)
+                                    {
+                                      CodeBuffer::instance().emit("sw $"+its($1.reg)+", 0($sp)");
+        		                          CodeBuffer::instance().emit("subu $sp, $sp, 4");
+                                      regs.deallocReg($1.reg);
+                                    }
+                                    else if (strcmp($1.type, "BOOL") == 0)
+                                    {
+                                      $1.reg = regs.allocReg();
+                                      string false_label = CodeBuffer::instance().genLabel();
+        											        CodeBuffer::instance().emit("li $"+its($1.reg)+", 0");
+        			                        std::vector<int> next_bp = CodeBuffer::instance().makelist(CodeBuffer::instance().emit("j "));
+                                      string true_label = CodeBuffer::instance().genLabel();
+        				                      CodeBuffer::instance().emit("li $"+its($1.reg)+", 1"); 
+                                      string next_label = CodeBuffer::instance().genLabel();
+                                      CodeBuffer::instance().bpatch((*$1.truelist), true_label);
+                                      CodeBuffer::instance().bpatch((*$1.falselist), false_label);
+                                      CodeBuffer::instance().bpatch(next_bp, next_label);
+                                      CodeBuffer::instance().emit("sw $"+its($1.reg)+", 0($sp)");
+                                      CodeBuffer::instance().emit("subu $sp, $sp, 4");
+                                      regs.deallocReg($1.reg);
+                                    }
+                                    else if (strcmp($1.type, "STRING") == 0)
+                                    {
+                                      int reg = regs.allocReg();
+                                      string label = CodeBuffer::instance().genLabel();
+        	                          	string labelandstr =  label + "_msg:    .asciiz    " + $1.value;
+        														  CodeBuffer::instance().emitData(labelandstr);
+        														  CodeBuffer::instance().emit("la $"+its(reg)+", "+label + "_msg");
+        		                          CodeBuffer::instance().emit("sw $"+its(reg)+", 0($sp)");
+        		                          CodeBuffer::instance().emit("subu $sp, $sp, 4");
+        		                          regs.deallocReg(reg);
+                                    } else {
+        //it's a struct
+                                      int reg = regs.allocReg();
+        int offset;
+        //rana
+        if(getOffset($1.value) >= 0)
+        	offset = (-4) * getOffset($1.value);
+        else
+          {
+        	offset = (-4) * (getOffset($1.value)+1) + getStructSize($1.type)*4;
+        }
+         								for(int i=0 ; i < getStructSize($1.type); i++){
+        						  int local_index = offset -4*i;
+        						  CodeBuffer::instance().emit("lw $"+its(reg)+", "+ its(local_index)+"($fp)");
+          CodeBuffer::instance().emit("sw $"+its(reg)+", 0($sp)");
+        						  CodeBuffer::instance().emit("subu $sp, $sp, 4");
+        						}
+                                      regs.deallocReg(reg);
+                                    } 
+                                 }
+          |Exp               {
+                                                    if (strcmp($1.type, "BOOL") == 0)
+                                                          {
+                                                            $1.reg = regs.allocReg();
+                                                            string false_label = CodeBuffer::instance().genLabel();
+                																		        CodeBuffer::instance().emit("li $"+its($1.reg)+", 0");
+																		                        std::vector<int> next_bp = CodeBuffer::instance().makelist(CodeBuffer::instance().emit("j "));
+                                                            string true_label = CodeBuffer::instance().genLabel();
+  																		                      CodeBuffer::instance().emit("li $"+its($1.reg)+", 1"); 
+                                                            string next_label = CodeBuffer::instance().genLabel();
+                                                            CodeBuffer::instance().bpatch((*$1.truelist), true_label);
+                                                            CodeBuffer::instance().bpatch((*$1.falselist), false_label);
+                                                            CodeBuffer::instance().bpatch(next_bp, next_label);
+                                                          }
+                              }
+          COMMA ExpList                           {
+                                                          $$.actual_types = $4.actual_types;
+                                                          $$.actual_types->insert($$.actual_types->begin(),$1.type);
+                                                          if(strcmp($1.type, "INT") == 0 || strcmp($1.type, "BYTE")==0|| strcmp($1.type, "BOOL")==0)
+                                                          {
+                                                            CodeBuffer::instance().emit("sw $"+its($1.reg)+", 0($sp)");
+																	                          CodeBuffer::instance().emit("subu $sp, $sp, 4");
+                                                            regs.deallocReg($1.reg);
+                                                          }
+                                                          else if (strcmp($1.type, "STRING") == 0)
+                                                          {
+                                                            int reg = regs.allocReg();
+                                                            string label = CodeBuffer::instance().genLabel();
+																                          	string labelandstr =  label + "_msg:    .asciiz    " + $1.value;
+                        																	  CodeBuffer::instance().emitData(labelandstr);
+                        																	  CodeBuffer::instance().emit("la $"+its(reg)+", "+label + "_msg");
+																	                          CodeBuffer::instance().emit("sw $"+its(reg)+", 0($sp)");
+																	                          CodeBuffer::instance().emit("subu $sp, $sp, 4");
+																	                          regs.deallocReg(reg);
+                                                          } else if(strcmp($1.type, "BOOL") != 0){
+															//it's a struct
+                                                            int reg = regs.allocReg();
+															int offset;
+															//rana
+															if(getOffset($1.value) >= 0)
+																offset = (-4) * getOffset($1.value);
+															else
+														    {
+																offset = (-4) * (getOffset($1.value)+1) + getStructSize($1.type)*4;
+															}
+                               								for(int i=0 ; i < getStructSize($1.type); i++){
+                      										  int local_index = offset -4*i;
+                      										  CodeBuffer::instance().emit("lw $"+its(reg)+", "+ its(local_index)+"($fp)");
+															  CodeBuffer::instance().emit("sw $"+its(reg)+", 0($sp)");
+                        									  CodeBuffer::instance().emit("subu $sp, $sp, 4");
+                      										}
+                                                            regs.deallocReg(reg);
+                                                          }
+                                                       }
+;
+
+Type			: 	INT {$$ = "INT";}
+					|BYTE {$$ = "BYTE";}
+					|BOOL {$$ = "BOOL";}
+;
+
+StructType		:	STRUCT ID {$$.name = $2;}
+;
+
+
+NBP          	: 	{ $$.next = new vector<int>(CodeBuffer::instance().makelist(CodeBuffer::instance().emit("j "))); }
+;
+MBP          	: 	{ $$.label = strdup(CodeBuffer::instance().genLabel().c_str()); }
+;
+Exp				:	LPAREN Exp RPAREN       {  
+                                      $$.type = $2.type;
+                                      $$.lineno = yylineno;
+                                      $$.reg = $2.reg;
+                                      $$.truelist = $2.truelist;
+                                      $$.falselist = $2.falselist;
+                                      $$.label = $2.label;
+                                      $$.bpbreak = $2.bpbreak;
+                                      $$.bpcontinue = $2.bpcontinue;
+                                      $$.value = $2.value;
+                                    }
+					|Exp BINOP Exp            {
+                                      if(strcmp($1.type,"INT") != 0 && strcmp($1.type,"BYTE") !=0)
+                                      {
+                                        errorMismatch(yylineno);
+                                        exit(1);
+                                      } 
+                                      if(strcmp($3.type,"INT") != 0 && strcmp($3.type,"BYTE") !=0)
+                                      {
+                                        errorMismatch(yylineno);
+                                        exit(1);
+                                      }
+                                      $$.type = (strcmp($1.type,"INT") == 0|| strcmp($3.type,"INT") == 0)? "INT":"BYTE";$$.lineno = yylineno;
+                                      
+                                      $$.reg = $1.reg;
+                                      regs.deallocReg($3.reg);
+                                      if(strcmp($2.value, "*") == 0){
+                                        CodeBuffer::instance().emit("mul $"+its($1.reg)+", $"+its($1.reg)+", $"+its($3.reg));
+                                      }
+                                      else{
+                                        CodeBuffer::instance().emit("beq $"+its($3.reg)+", 0, byZero");	
+			                                  CodeBuffer::instance().emit("div $"+its($1.reg)+", $"+its($1.reg)+", $"+its($3.reg));
+                                      }
+                                   		if (strcmp($$.type,"BYTE") == 0) 
+			                                  CodeBuffer::instance().emit("and $"+its($1.reg)+", $"+its($1.reg)+", 255");
+                                    }
+          |Exp PLUSMINUS Exp        {
+                                      if(strcmp($1.type,"INT") != 0 && strcmp($1.type,"BYTE") !=0)
+                                      {
+                                        errorMismatch(yylineno);
+                                        exit(1);
+                                      } 
+                                      if(strcmp($3.type,"INT") != 0 && strcmp($3.type,"BYTE") !=0)
+                                      {
+                                        errorMismatch(yylineno);
+                                        exit(1);
+                                      }
+                                      $$.type = (strcmp($1.type,"INT") == 0|| strcmp($3.type,"INT") == 0)? "INT":"BYTE";$$.lineno = yylineno;
+                                      
+                                      $$.reg = $1.reg;
+                                      regs.deallocReg($3.reg);
+                                      if(strcmp($2.value, "+") == 0){
+                                        CodeBuffer::instance().emit("addu $"+its($1.reg)+", $"+its($1.reg)+", $"+its($3.reg));
+                                      }
+                                      else
+                                        CodeBuffer::instance().emit("subu $"+its($1.reg)+", $"+its($1.reg)+", $"+its($3.reg));
+                                      if (strcmp($$.type,"BYTE") == 0) 
+			                                  CodeBuffer::instance().emit("and $"+its($1.reg)+", $"+its($1.reg)+", 255");
+                                    }
+					|ID                       {
+                                      if(!isDeclared($1))  
+                                      { 
+                                        errorUndef(yylineno, $1);
+                                        exit(1);
+                                      }
+                                      $$.type =  getType($1);
+                                      $$.lineno = yylineno;
+                                      $$.value = $1;        
+                                      if(strcmp($$.type,"INT")==0 || strcmp($$.type,"BYTE")==0  || strcmp($$.type,"BOOL")==0 || strcmp($$.type,"STRING")==0){
+										                      $$.reg = regs.allocReg();
+                                          int offset = (-4) * getOffset($1);
+                                          CodeBuffer::instance().emit("#"+its(getOffset($1)));
+                                          CodeBuffer::instance().emit("lw $"+its($$.reg)+", "+its(offset)+"($fp)");
+                                       if(strcmp($$.type, "BOOL")==0){
+                                  			  $$.falselist = new std::vector<int>(CodeBuffer::instance().makelist(CodeBuffer::instance().emit("beq $"+its($$.reg)+",0, ")));
+                                  				$$.truelist =  new std::vector<int>(CodeBuffer::instance().makelist(CodeBuffer::instance().emit("j ")));
+                                       
+                                      regs.deallocReg($$.reg);
+                                      }
+                                      }
+                                      
+                                    }
+					|ID PERIOD ID             {
+                                      $$.type = typeDefinedinParentScopes($1,retrieveStructType($1),$3);
+                                      $$.lineno = yylineno;
+                                      $$.reg = regs.allocReg();
+                                      $$.truelist = new std::vector<int>();
+                                      $$.falselist = new std::vector<int>();
+                                      int offset;
+                                      if(getOffset($1) >= 0)
+                                        offset = (-4) * getOffset($1) - (4* getIndexInStruct(retrieveStructType($1),$3));
+                                      else
+                                      {
+                                        offset = (-4) * (getOffset($1)+1) + getStructSize(retrieveStructType($1))*4 - getIndexInStruct(retrieveStructType($1),$3)*4;
+                                      }
+                                      CodeBuffer::instance().emit("lw $"+its($$.reg)+", "+its(offset)+"($fp)");
+                                      if(strcmp(getTypeOfField(retrieveStructType($1),getIndexInStruct(retrieveStructType($1),$3)), "BOOL")==0){
+			  $$.falselist = new std::vector<int>(CodeBuffer::instance().makelist(CodeBuffer::instance().emit("beq $"+its($$.reg)+",0, ")));
+				$$.truelist =  new std::vector<int>(CodeBuffer::instance().makelist(CodeBuffer::instance().emit("j ")));
+        regs.deallocReg($$.reg);
+                                      } 
+                                    }
+					|Call                     {
+                                      $$.lineno = yylineno;
+                                      $$.reg = $1.reg;
+                                      $$.truelist = $1.truelist;
+                                      $$.falselist = $1.falselist;
+                                      /*if(strcmp($1.type,"BOOL")==0)
+                                        {
+                                          $1.reg = regs.allocReg();
+                                          string false_label = CodeBuffer::instance().genLabel();
+				                                  CodeBuffer::instance().emit("li $"+its($1.reg)+", 0");
+                                          std::vector<int> next_bp = CodeBuffer::instance().makelist(CodeBuffer::instance().emit("j "));
+                                          string true_label = CodeBuffer::instance().genLabel();
+																		      CodeBuffer::instance().emit("li $"+its($1.reg)+", 1"); 
+                                          string next_label = CodeBuffer::instance().genLabel();
+                                          CodeBuffer::instance().bpatch((*$1.truelist), true_label);
+                                          CodeBuffer::instance().bpatch((*$1.falselist), false_label);
+                                          CodeBuffer::instance().bpatch(next_bp, next_label);
+                                        }
+                                        CodeBuffer::instance().emit("move $"+its($$.reg)+", $"+its($1.reg));
+                                        regs.deallocReg($1.reg);*/
+                                    }
+					|NUM                      {
+                                      $$.lineno = yylineno;
+                                      $$.type = "INT";
+                                      $$.value = $1;
+                                      $$.reg = regs.allocReg();
+                                      std::stringstream buff;
+                                      buff <<"li $"<<$$.reg<<", "<<$1;
+                                      CodeBuffer::instance().emit(buff.str());
+                                    }
+					|NUM B                    {
+                                      $$.type = "BYTE";
+                                      $$.lineno = yylineno;
+                                     	std::stringstream res;
+                                      res << 
+                                  	  res << atoi($1) % 256;
+                                      $$.value = res.str().c_str();
+                                      $$.reg = regs.allocReg();
+                                      std::stringstream buff;
+                                      buff <<"li $"<<$$.reg<<", "<<$1;
+                                      CodeBuffer::instance().emit(buff.str());
+                                    }
+					|STRING                   { 
+                                      $$.type = "STRING";
+                                      $$.lineno = yylineno;
+                                      $$.value = $1;
+                                    }
+					|TRUE                     { 
+                                      $$.type = "BOOL";
+                                      $$.lineno = yylineno;
+                                      $$.truelist = new vector<int>(CodeBuffer::instance().makelist(CodeBuffer::instance().emit("j ")));
+																      $$.falselist= new vector<int>();
+                                    }
+					|FALSE                    { 
+                                      $$.type = "BOOL";
+                                      $$.lineno = yylineno;
+                                      $$.truelist = new vector<int>();
+																      $$.falselist= new vector<int>(CodeBuffer::instance().makelist(CodeBuffer::instance().emit("j ")));
+                                    }
+					|NOT Exp                  {
+                                      if(strcmp($2.type,"BOOL") != 0)
+                                      {
+                                        errorMismatch(yylineno);
+                                        exit(1);
+                                      } 
+                                      $$.type = "BOOL";
+                                      $$.lineno = yylineno;
+                                      $$.truelist = $2.falselist;
+                                      $$.falselist = $2.truelist;
+                                      
+                                    }
+					|Exp AND MBP Exp              {
+                                      if(strcmp($1.type,"BOOL") != 0 || strcmp($4.type,"BOOL") !=0)
+                                      {
+                                        errorMismatch(yylineno);
+                                        exit(1);
+                                      } 
+                                      $$.type = "BOOL";
+                                      $$.lineno = yylineno;
+                                      CodeBuffer::instance().bpatch(*($1.truelist), $3.label);
+                                      $$.truelist = $4.truelist;
+                                      $$.falselist = new vector<int>(CodeBuffer::instance().merge(*($1.falselist),*($4.falselist)));
+                                    }
+					|Exp OR MBP Exp               {
+                                      if(strcmp($1.type,"BOOL") != 0 || strcmp($4.type,"BOOL") !=0)
+                                      {
+                                        errorMismatch(yylineno);
+                                        exit(1);
+                                      } 
+                                      $$.type = "BOOL";
+                                      $$.lineno = yylineno;
+                                      CodeBuffer::instance().bpatch(*($1.falselist), $3.label);
+                                      $$.truelist = new vector<int>(CodeBuffer::instance().merge(*($1.truelist),*($4.truelist)));
+                                      $$.falselist = $4.falselist;
+                                     }
+					|Exp RELOP Exp             {
+                                       if(strcmp($1.type,"INT") != 0 && strcmp($1.type,"BYTE") !=0)
+                                       {
+                                         errorMismatch(yylineno);
+                                         exit(1);
+                                       } 
+                                       if(strcmp($3.type,"INT") != 0 && strcmp($3.type,"BYTE") !=0)
+                                       {
+                                         errorMismatch(yylineno);
+                                         exit(1);
+                                       }
+                                       $$.type = "BOOL";
+                                       $$.lineno = yylineno;
+                                       	if (strcmp($2.value, "==") == 0) 
+                                         {
+                               $$.truelist = new std::vector<int>(CodeBuffer::instance().makelist(CodeBuffer::instance().emit("beq $"+its($1.reg)+", $"+its($3.reg)+", ")));
+                                    		 } else if (strcmp($2.value, "!=") == 0) {
+                               $$.truelist = new std::vector<int>(CodeBuffer::instance().makelist(CodeBuffer::instance().emit("bne $"+its($1.reg)+", $"+its($3.reg)+", ")));
+                                         } else if (strcmp($2.value, ">=") == 0){
+			                         $$.truelist = new std::vector<int>(CodeBuffer::instance().makelist(CodeBuffer::instance().emit("bge $"+its($1.reg)+", $"+its($3.reg)+", ")));
+                               	          } else if(strcmp($2.value, ">") == 0){
+    	                         $$.truelist = new std::vector<int>(CodeBuffer::instance().makelist(CodeBuffer::instance().emit("bgt $"+its($1.reg)+", $"+its($3.reg)+", ")));
+	                                      	}else if(strcmp($2.value, "<=") == 0){
+                               $$.truelist = new std::vector<int>(CodeBuffer::instance().makelist(CodeBuffer::instance().emit("ble $"+its($1.reg)+", $"+its($3.reg)+", ")));
+	                                    	}else if(strcmp($2.value, "<") == 0){
+                               $$.truelist = new std::vector<int>(CodeBuffer::instance().makelist(CodeBuffer::instance().emit("blt $"+its($1.reg)+", $"+its($3.reg)+", ")));
+		                                    }
+                                   $$.falselist = new std::vector<int>(CodeBuffer::instance().makelist(CodeBuffer::instance().emit("j ")));
+                                     	
+                                        regs.deallocReg($1.reg);
+                                       regs.deallocReg($3.reg);
+                                     }
+;
+
+%%
+
+int main()
+{
+	yyparse();
+}
+vector<string>* getTypes(const char * id){
+  for(int i=0; i<functions_defined.size(); i++){
+    if(strcmp(functions_defined[i].name,id)==0){
+      return functions_defined[i].param_types;
+    }
+  }
+  
+  errorUndefFunc(yylineno,id);
+  ;exit(1);
+  return NULL;
+}
+void yyerror
+(const char*) { errorSyn(yylineno); exit(1); }
+
+bool isDeclared(const char* name){
+  int last = symbols_table.size() - 1;
+  for(;last >= 0 ; last--){
+    if(symbols_table[last].find(name) != symbols_table[last].end())
+        return true;
+  }
+  for(int i=0;i<functions_defined.size();i++){
+    if(strcmp(functions_defined[i].name, name) == 0)
+      return true;
+  }
+  last = structs_defined.size() - 1;
+  for(;last >= 0 ; last--){
+    for(int i=0;i<structs_defined[last].size();i++)
+      if(strcmp(structs_defined[last][i].name,name)==0)
+        return true;
+  }
+  
+  return false;
+}
+int getOffset(const char* name){
+  int last = symbols_table.size() - 1;
+  for(;last >= 0 ; last--){
+    if(symbols_table[last].find(name) != symbols_table[last].end())
+        return symbols_table[last].find(name)->second.offset;
+  }
+}
+
+
+int getSizeFromStructInfoVector(vector<struct_info> structs, const char* name){
+  for(int i=0;i<structs.size();i++){
+    if(strcmp(structs[i].name,name) == 0)
+      return structs[i].mem_names->size();
+  }
+  return -1;
+}
+int getStructSize(const char* name){
+  int last = structs_defined.size() - 1;
+  for(;last >= 0 ; last--){
+      if(getSizeFromStructInfoVector(structs_defined[last],name) != -1)
+        return getSizeFromStructInfoVector(structs_defined[last],name);
+  }
+  return -1;
+}
+void insert(const char* name, const char* type ,int argument){
+
+  //cout << "inserting :" << name << " of type " <<type << "line: " <<yylineno<<endl;
+  if(isDeclared(name)){
+    errorDef(yylineno, name);
+    exit(1); 
+  }
+  ID_Node* symbol = new ID_Node();
+  symbol->name = (char*)name;
+  symbol->type = type;
+   symbol->offset = argument == 1 ? -1*argument*offsets[offsets.size()-1]-1 : offsets[offsets.size()-1];
+  //cout << "added new offset " <<name << " " << symbol->offset;
+  if(strcmp(type,"INT")!=0 && strcmp(type,"BYTE")!=0  && strcmp(type,"BOOL")!=0&& strcmp(type,"STRING")!=0){
+    offsets[offsets.size()-1]+= getStructSize(type);
+  } else {
+  offsets[offsets.size()-1]++;
+  }
+    
+  symbol->index = indexer;
+  indexer++;
+  symbols_table[symbols_table.size()-1][name] = (*symbol);
+  
+  
+  printDebug();
+}
+const char* getType(const char* name){
+ //cout << "getting :" << name << endl;
+  int last = symbols_table.size() - 1;
+  for(;last >= 0 ; last--){
+      if(symbols_table[last].find(name) != symbols_table[last].end())
+        return (*(symbols_table[last].find(name))).second.type;
+  }
+  errorUndef(yylineno, name);
+  exit(1);
+}
+void openScope(){
+  map<string, ID_Node> scope;
+  symbols_table.push_back(scope);
+  if(offsets.empty())
+    offsets.push_back(0);
+  else
+    offsets.push_back(offsets[offsets.size()-1]);
+  vector<struct_info> info;
+  structs_defined.push_back(info);
+}
+ID_Node findAndRetrieve(map<string,ID_Node> variables){
+  int minIndex = indexer;
+  ID_Node treasure;
+  for (std::map<string, ID_Node>::iterator it = variables.begin(); it != variables.end(); ++it)
+      {
+        if((*it).second.index < minIndex){
+          minIndex = (*it).second.index;
+          treasure = (*it).second;
+        }
+      }
+  return treasure;
+}
+ID_Node retrieveFromMap(map<string,ID_Node> variables, int minIndex){
+  ID_Node treasure;
+  for (std::map<string, ID_Node>::iterator it = variables.begin(); it != variables.end(); ++it)
+      {
+        if((*it).second.index == minIndex){
+          treasure = (*it).second;
+          variables.erase(it);
+          break;
+        }
+      }
+  return treasure;
+}
+struct_info retrieveFromVector(vector<struct_info> structs, int minIndex){
+  struct_info rana;
+  for (std::vector<struct_info>::iterator it = structs.begin(); it != structs.end(); ++it)
+      {
+        if((*it).index == minIndex){
+          rana = (*it);
+          structs.erase(it);
+          break;
+        }
+      }
+  return rana;
+}
+void closeScope(int scopeType){
+  int local_indexer = 0;
+
+  if(scopeType==1){
+    function_info function = functions_defined[functions_defined.size()-1];
+    for(int i =0; i < function.param_names->size();i++){
+    if(function.param_types->at(i) != "INT" && function.param_types->at(i)!= "BYTE" && function.param_types->at(i)!="BOOL"&& function.param_types->at(i)!="STRING"){
+      local_indexer-=getStructSize(function.param_types->at(i).c_str());
+      symbols_table[symbols_table.size()-1].erase(function.param_names->at(i));
+    }
+    else{
+      local_indexer--;
+      symbols_table[symbols_table.size()-1].erase(function.param_names->at(i));
+      }
+    }
+  }
+  map<string, ID_Node> variables = symbols_table[symbols_table.size()-1];
+  map<string, ID_Node>::iterator it = variables.begin();
+  while(!variables.empty()){
+    ID_Node treasure = findAndRetrieve(variables);
+    variables.erase(treasure.name);
+  
+  }
+
+  symbols_table.pop_back();
+  offsets.pop_back();
+  structs_defined.pop_back();
+}
+const char* handleRelOP(const char* op, const char* val1, const char* val2){
+  int v1 = strtol(val1, NULL, 10);
+  int v2 = strtol(val2, NULL, 10);
+  bool res;
+  if(op[0] == '>' && op[1] == '\0'){
+    res = v1>v2 ;
+  }
+  if(op[0] == '<' && op[1] == '\0'){
+    res = v1<v2;
+  }
+  if(op[0] == '=' && op[1] == '='){
+    res = v1==v2;
+  }
+  if(op[0] == '!' && op[1] == '='){
+    res = v1!=v2;
+  }
+  if(op[0] == '<' && op[1] == '='){
+    res = v1<=v2;
+  }
+  if(op[0] == '>' && op[1] == '='){
+    res = v1>=v2;
+  }
+  return (res == true ? "true" : "false");
+}
+
+  
+  bool sameTypes(vector<string>*first ,vector<string>* second){
+  //cout << first->size() << second->size();
+  if(first->size() != second->size())
+    return false;
+  for(int i=0;i<second->size();i++){
+    if(first->at(i) == "INT" && second->at(i)=="BYTE")
+      continue;
+    if(first->at(i)!=second->at(i))
+      return false;
+  }
+  return true;
+  }
+  
+  void printDebug(){
+
+    for(int i=0;i<symbols_table.size();i++)
+    {
+      map<string, ID_Node> momo = symbols_table[i];
+      for (std::map<string, ID_Node>::iterator it = momo.begin(); it != momo.end(); ++it)
+      {
+        //cout<<"Currently in table: " <<(it->second).name;
+      }
+    }
+  }
+    const char* typeDefinedinParentScopes(const char* actual, const char * typeDesired, const char* field){
+      for(int i=0; i<structs_defined.size(); i++){
+        if(typeDefined(typeDesired,i)){
+          vector<struct_info> structs = structs_defined[i];
+          for(int j=0; j<structs.size(); j++){
+            if(strcmp(typeDesired,structs[j].name)==0){
+            vector<string>* struct_fields = structs[j].mem_names;
+            for(int k=0; k<struct_fields->size(); k++){
+              if(strcmp(struct_fields->at(k).c_str(),field)==0){
+                return structs[j].mem_types->at(k).c_str();
+              }
+            }
+            errorUndefStructMember(yylineno, actual);
+            exit(1);
+          }
+         
+        }
+      }
+      }
+      errorUndef(yylineno,typeDesired);
+      exit(1);
+      return NULL;
+      
+    }
+    bool typeDefined(const char* typeDesired,int scope){
+    if(strcmp(typeDesired,"INT")==0 || strcmp(typeDesired,"BYTE")==0  || strcmp(typeDesired,"BOOL")==0||strcmp(typeDesired,"STRING")==0) 
+      return true;
+      if(scope <0 || scope >= structs_defined.size())
+      return false;
+      
+      for(int i=0;i<structs_defined[scope].size();i++){
+        if(strcmp(typeDesired,structs_defined[scope][i].name)==0)
+          return true;
+          }
+      return false;
+    }
+    char* getFunctionRetType(const char* func){
+      char* res = NULL;
+      for(int i=0;i<functions_defined.size();i++){
+        if(strcmp(functions_defined[i].name, func)==0)
+          res = (char*)functions_defined[i].retType;
+      }
+      return res;
+    }
+    bool functionExists(const char* func){
+    for(int i=0;i<functions_defined.size();i++){
+        if(strcmp(functions_defined[i].name, func)==0)
+          return true;
+      }
+    return false;
+    }
+    const char* retrieveStructType(const char* name)
+    {
+    int last = symbols_table.size() - 1;
+    for(;last >= 0 ; last--){
+      std::map<string, ID_Node> variables=symbols_table[last];
+      for (std::map<string, ID_Node>::iterator it = variables.begin(); it != variables.end(); ++it)
+      {
+        if(strcmp((*it).second.name,name) == 0)
+        {
+            if(strcmp((*it).second.type,"INT")==0 || strcmp((*it).second.type,"BYTE")==0  || strcmp((*it).second.type,"BOOL")==0||strcmp((*it).second.type,"STRING")==0) 
+            {
+              errorUndef(yylineno, name);
+              exit(1);
+            }
+        return (*it).second.type;
+        }
+      }
+    }
+      errorUndef(yylineno, name);
+      exit(1);
+      return NULL;
+    }
+      bool typeDefinedAnywhere(const char* typeDesired){
+        for(int i=0;i<structs_defined.size();i++){
+        if(typeDefined(typeDesired,i)) return true;
+        }
+      return false;
+      }
+      void prepareParameterTypes(vector<string> * types){
+        for(int i =0; i< types->size(); i++){
+          if(types->at(i)=="INT"  ||types->at(i)=="BYTE" || types->at(i)=="BOOL" || types->at(i)=="STRING"){
+            continue;
+        }
+        types->at(i) = "struct " +types->at(i);
+      }
+      }
+      
+void emitPrints(){
+  CodeBuffer::instance().emit("print:");
+  CodeBuffer::instance().emit("lw $a0, 4($sp)");
+  CodeBuffer::instance().emit("li $v0, 4");
+  CodeBuffer::instance().emit("syscall");
+  CodeBuffer::instance().emit("jr $ra");
+
+  CodeBuffer::instance().emit("printi:");
+  CodeBuffer::instance().emit("lw $a0, 4($sp)");
+  CodeBuffer::instance().emit("li $v0, 1");
+  CodeBuffer::instance().emit("syscall");
+  CodeBuffer::instance().emit("jr $ra");
+  
+ 	CodeBuffer::instance().emit("byZero:");
+  CodeBuffer::instance().emit("la $a0, zeroMessage");
+	CodeBuffer::instance().emit("li, $v0, 4");
+	CodeBuffer::instance().emit("syscall");
+	CodeBuffer::instance().emit("li, $v0, 10");
+	CodeBuffer::instance().emit("syscall");
+  CodeBuffer::instance().emitData("zeroMessage: \t .asciiz \t \"Error division by zero\n\"");
+}
+
+
+int getIndexInStruct(const char* type, const char* desired){
+  for(int i = structs_defined.size()-1 ;  i >= 0 ;  i--)
+  {
+    vector<struct_info> roro_structs = structs_defined[i];
+    for (int j = 0; j < roro_structs.size() ; j++){
+      struct_info roro_struct = roro_structs[j];
+      if(strcmp(roro_struct.name, type) != 0)
+        continue;
+      for (int k=0; k < roro_struct.mem_names->size() ; k++)
+      {
+        if((*roro_struct.mem_names)[k] == desired){
+          return k;
+          }
+      }
+    }
+  }
+}
+const char* getTypeOfField(const char* type, int index){
+  for(int i = structs_defined.size()-1 ;  i >= 0 ;  i--)
+  {
+    vector<struct_info> roro_structs = structs_defined[i];
+    for (int j = 0; j < roro_structs.size() ; j++){
+      struct_info roro_struct = roro_structs[j];
+      if(strcmp(roro_struct.name, type) != 0)
+        continue;
+      return roro_struct.mem_types->at(index).c_str();
+      }
+  }
+}

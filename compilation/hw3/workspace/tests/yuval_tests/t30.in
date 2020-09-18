@@ -1,0 +1,7 @@
+void main(){
+  int x;
+}
+void checkFuncCall(int a,bool x,byte z,byte p){
+  int k;
+  k=checkFuncCall(5 b,false,6 b,4 b);
+}

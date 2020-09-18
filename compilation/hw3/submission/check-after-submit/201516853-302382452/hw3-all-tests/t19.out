@@ -1,0 +1,12 @@
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+f - 0 preconditions
+x BYTE -1
+i BYTE 0
+---end scope---
+g - 0 preconditions
+line 17: type mismatch

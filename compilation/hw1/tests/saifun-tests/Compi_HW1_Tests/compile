@@ -1,0 +1,8 @@
+flex hw1.lex
+gcc -ll lex.yy.c
+for file in `ls tests | grep -w "in" | cut -d"." -f1`; do
+	echo Running test for $file
+	./a.out < tests/${file}.in > tests/${file}
+	diff tests/$file tests/${file}.out
+	echo \*\*\* DONE \*\*\*
+done

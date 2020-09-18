@@ -1,0 +1,9 @@
+table.itemstore_table a.nostylebutton:link
+{
+    text-decoration: none !	
+					IMPortant;
+    color: rgb(	245	,
+				214	, 
+				93	
+			  );
+}

@@ -1,0 +1,9 @@
+int a(int c){
+return 3;
+}
+
+void main(){
+bool t1 = true;
+bool t2 = false;
+int c = a(t1 and t2);
+}

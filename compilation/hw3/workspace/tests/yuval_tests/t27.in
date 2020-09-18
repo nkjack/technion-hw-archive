@@ -1,0 +1,20 @@
+void main(){
+  int x;
+}
+void checkScope(){
+  int x;
+  {
+    x=5;
+    int y;
+    {
+      x=y;
+      int z;
+    }
+    y=x;
+    int z;
+  }
+  x=y;
+  int y;
+  int z;
+  x=z;
+}

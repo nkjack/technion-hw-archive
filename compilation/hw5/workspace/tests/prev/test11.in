@@ -1,0 +1,12 @@
+int returnInt() {
+	return 3;
+}
+void maxTestsAssignFromFunc() {
+	int x = returnInt();
+	printi(x);
+}
+
+void main() {
+     maxTestsAssignFromFunc();
+     print("\nI hate this course\n");
+}

@@ -1,0 +1,11 @@
+int foo(int m, int n)
+@pre(m != 0)
+@pre(n != 0)
+@pre(m * n != 0)
+{
+	return m * n;
+}
+
+void main() {
+	foo(1, foo(1, 1));
+}

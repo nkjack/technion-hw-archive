@@ -1,0 +1,9 @@
+int a(int c){
+return 3;
+}
+
+void main(){
+int c = a(6);
+c = a(250b);
+}
+

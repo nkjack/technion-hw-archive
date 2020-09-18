@@ -1,0 +1,4 @@
+Test count: 23
+Test weights:
+The weight of first two tests (t1, t2) is 8 points each.
+The weight of all other tests (t3 to t23) is 4 points each.

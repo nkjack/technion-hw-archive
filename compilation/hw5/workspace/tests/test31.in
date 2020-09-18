@@ -1,0 +1,15 @@
+//eof
+
+byte foo() {
+	print("foo\n");
+}
+
+bool bar() {
+	print("bar\n");
+}
+
+void main() {
+	int a = foo();
+	bool c = bar();
+	print("done:)\n");
+}

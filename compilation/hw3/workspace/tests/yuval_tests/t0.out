@@ -1,0 +1,177 @@
+---end scope---
+main - 0 preconditions
+x INT 0
+---end scope---
+checkByte - 0 preconditions
+x BYTE 0
+z BYTE 1
+y BYTE 2
+---end scope---
+checkInt - 0 preconditions
+x INT 0
+z BYTE 1
+y INT 2
+---end scope---
+checkBool - 0 preconditions
+x BOOL 0
+z BOOL 1
+---end scope---
+checkRelop - 0 preconditions
+x INT 0
+z BYTE 1
+res BOOL 2
+---end scope---
+checkAndOrNot - 0 preconditions
+x BOOL 0
+z BOOL 1
+res BOOL 2
+---end scope---
+checkBinop - 0 preconditions
+x INT 0
+z BYTE 1
+y INT 2
+w BYTE 3
+res INT 4
+bres BYTE 5
+---end scope---
+checkStringPrintPrinti - 0 preconditions
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+t INT 1
+---end scope---
+---end scope---
+checkIf - 0 preconditions
+x INT 0
+---end scope---
+k INT 1
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+checkWhile - 0 preconditions
+x INT 0
+---end scope---
+checkFuncDecl - 2 preconditions
+a INT -1
+x BOOL -2
+z BYTE -3
+p BYTE -4
+k INT 0
+---end scope---
+z INT 2
+---end scope---
+y INT 1
+z INT 2
+---end scope---
+checkScope - 0 preconditions
+x INT 0
+y INT 1
+z INT 2
+---end scope---
+checkFuncCall - 0 preconditions
+a INT -1
+x BOOL -2
+z BYTE -3
+p BYTE -4
+k INT 0
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+checkVoidReturn - 0 preconditions
+x INT 0
+y INT 1
+---end scope---
+x INT 0
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+checkIntReturn - 0 preconditions
+---end scope---
+x INT 0
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+checkBoolReturn - 0 preconditions
+j BOOL -1
+---end scope---
+x INT 0
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+checkBreak - 0 preconditions
+---end scope---
+x INT 0
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+checkContinue - 0 preconditions
+---end scope---
+print (STRING)->VOID 0
+printi (INT)->VOID 0
+main ()->VOID 0
+checkByte ()->VOID 0
+checkInt ()->VOID 0
+checkBool ()->VOID 0
+checkRelop ()->VOID 0
+checkAndOrNot ()->VOID 0
+checkBinop ()->VOID 0
+checkStringPrintPrinti ()->VOID 0
+checkIf ()->VOID 0
+checkWhile ()->VOID 0
+checkFuncDecl (INT,BOOL,BYTE,BYTE)->INT 0
+checkScope ()->VOID 0
+checkFuncCall (INT,BOOL,BYTE,BYTE)->INT 0
+checkVoidReturn ()->VOID 0
+checkIntReturn ()->INT 0
+checkBoolReturn (BOOL)->BOOL 0
+checkBreak ()->VOID 0
+checkContinue ()->VOID 0

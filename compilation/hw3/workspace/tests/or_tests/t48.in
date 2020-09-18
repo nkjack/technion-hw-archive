@@ -1,0 +1,3 @@
+void main(){
+byte c = 2500b;
+}

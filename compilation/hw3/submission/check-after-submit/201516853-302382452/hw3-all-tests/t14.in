@@ -1,0 +1,11 @@
+//some test
+//some other comment
+int foo(int x)
+@pre(x > 1) {
+	return x;
+}
+void main() {
+// another comment
+    print("val");
+    printi(foo(2));
+}

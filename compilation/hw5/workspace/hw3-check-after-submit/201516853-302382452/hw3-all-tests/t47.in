@@ -1,0 +1,10 @@
+int foo(int x, byte y)
+@pre(y != 0)
+{
+    return x / y;
+}
+
+void main()
+@pre(y != 0)
+	printi(foo(1, 1 b));
+}

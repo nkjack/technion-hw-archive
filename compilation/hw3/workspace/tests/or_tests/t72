@@ -1,0 +1,4 @@
+---end scope---
+foo - 0 preconditions
+a INT -1
+line 5: identifier foo is already defined

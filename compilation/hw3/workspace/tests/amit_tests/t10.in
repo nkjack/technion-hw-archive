@@ -1,0 +1,16 @@
+// continue not in while block
+void printOk(bool isOk) {
+    if (isOk) print("ok");
+}
+
+void main()
+{
+    int x = 4;
+    byte y = 100 b;
+    printOk(x>y);
+    while (x > y) {
+        x = x + 1;
+    }
+    continue;
+    int z;
+}

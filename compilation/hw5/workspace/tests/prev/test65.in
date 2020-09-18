@@ -1,0 +1,13 @@
+void maxTestsTestBracketArithmetic() {
+	int x = 3 * (5 + 4) + 9 / (1 + 2);
+	printi(x);
+	print("\n");
+	x = 3 * (5 - 9) + (5 - 3) * 8 - 4 * (4 / 4);
+	printi(x);
+	print("\n");
+}
+
+void main() {
+     maxTestsTestBracketArithmetic();
+     print("\nI hate this course\n");
+}

@@ -1,0 +1,5 @@
+---end scope---
+test - 2 preconditions
+bin BOOL -1
+in BYTE -2
+line 10: prototype mismatch, function test expects arguments (BOOL,BYTE)

@@ -1,0 +1,41 @@
+
+bool isGreater(int x,int y,bool flag)
+@pre(flag)
+@pre(flag and not not flag and (x >= y))
+{
+	return true;
+}
+void TestFunc(bool flag) 
+@pre(not flag)
+{
+	int x=5;
+	print("x = ");
+	printi(x);
+	print("\n");
+	{
+		int y;
+		{
+			int z = x;
+		}
+		y = x*x;
+
+		while(true) {
+			print("y = ");
+			printi(y);
+			print("\n");
+			if(not (y<1) and isGreater(y,x,not flag)){
+					y =y - x;
+					continue;
+			}
+			else
+				break;
+		}
+		
+		print("y reached 0\n");
+				
+	}
+}
+
+void main() {
+	TestFunc(false);
+}

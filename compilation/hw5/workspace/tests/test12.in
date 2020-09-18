@@ -1,0 +1,39 @@
+
+int returnSecond(int x,int y, bool flag)
+@pre(x > 0 or y > 0)
+@pre(((x + y) > 0) and (x != y) and flag)
+{
+	return y;
+}
+bool swapInt(int x,int y,bool flag) 
+@pre(flag)
+{
+	printi(x);
+	print("\n");
+	printi(y);
+	print("\n");
+	
+	int temp = x;
+	x = returnSecond(x,y,flag);
+	if (x != y)
+		return false;
+	y = returnSecond (y,temp,flag);
+	if (temp == y){
+		printi(x);
+		print("\n");
+		printi(y);
+		print("\n");
+		return true;
+		}
+	return false;	
+}
+
+void main() {
+	int x = 4;
+	int y = 0-3;
+	if(swapInt(x,y,true))
+		print("Swapped\n");
+	else {
+		print("Swap Failed\n");
+	}
+}

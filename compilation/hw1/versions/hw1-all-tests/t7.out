@@ -1,0 +1,6 @@
+1 IMPORT @import
+1 NAME good_comments
+2 COMMENT 1
+3 IMPORT @import
+3 STRING bad comments
+Warning nested comment

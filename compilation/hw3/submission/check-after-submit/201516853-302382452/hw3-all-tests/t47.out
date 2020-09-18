@@ -1,0 +1,5 @@
+---end scope---
+foo - 1 preconditions
+x INT -1
+y BYTE -2
+line 8: variable y is not defined

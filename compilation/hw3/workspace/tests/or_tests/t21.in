@@ -1,0 +1,5 @@
+void main(){
+bool a = true;
+bool c = false;
+if (a==c) printi(7);
+}

@@ -1,0 +1,209 @@
+void main(){
+  int x;
+}
+void checkByte(){
+  byte x;
+  byte z = 6 b;
+  byte y = 19 b;
+  y = z;
+}
+void checkInt(){
+  int x;
+  byte z = 6 b;
+  int y = 19 b;
+  y = z;
+  x = 8;
+}
+void checkBool(){
+  bool x;
+  bool z = true;
+  x = z;
+}
+void checkRelop(){
+  int x;
+  byte z;
+  bool res;
+  res = x == z;
+  res = x != z;
+  res = x >= z;
+  res = x <= z;
+  res = x > z;
+  res = x < z;
+}
+void checkAndOrNot(){
+  bool x;
+  bool z;
+  bool res;
+  res = not x;
+  res = x and z;
+  res = x or z;
+  res = x and z or false;
+}
+void checkBinop(){
+  int x;
+  byte z;
+  int y;
+  byte w;
+  int res;
+  byte bres;
+  res = x * y;
+  res = x + y;
+  res = x - y;
+  res = x / y;
+  res = y * z;
+  res = y + z;
+  res = x - z;
+  res = x / z;
+  bres = w * z;
+  bres = w + z;
+  bres = w - z;
+  bres = w / z;
+}
+void checkStringPrintPrinti(){
+  print("this is string");
+  printi(6);
+}
+void checkIf(){
+  int x;
+  if(true){
+    print("ok");
+    if (false) printi(5);
+  }
+  if (false) printi(5);
+  else {
+    int t;
+  }
+}
+void checkWhile(){
+  int x;
+  while(true){
+    print("ok");
+    while(false){
+      int k;
+    }
+  }
+}
+int checkFuncDecl(int a,bool x,byte z,byte p)
+@pre(x)
+@pre(p >= 1)
+{
+  int k;
+}
+void checkScope(){
+  int x;
+  {
+    x=5;
+    int y;
+    {
+      x=y;
+      int z;
+    }
+    y=x;
+    int z;
+  }
+  int y;
+  int z;
+  x=z;
+}
+int checkFuncCall(int a,bool x,byte z,byte p){
+  int k;
+  checkScope();
+  k=checkFuncDecl(5,false,6 b,4 b);
+  k=checkFuncCall(5 b,false,6 b,4 b);
+}
+
+void checkVoidReturn(){
+  int x;
+  while (true){
+    while (true){
+      while (true){
+        while (true){
+          while (true){
+            while (true){
+              return;
+            }
+            return;
+          }
+        }
+      }
+      return;
+    }
+  }
+  return;
+  int y;
+}
+
+int checkIntReturn(){
+  while (true){
+    while (true){
+      while (true){
+        while (true){
+          while (true){
+            while (true){
+              int x;
+              return x;
+            }
+          }
+        }
+        return 5b;
+      }
+    }
+    return 19;
+  }
+  return 5;
+}
+bool checkBoolReturn(bool j){
+  while (true){
+    while (true){
+      while (true){
+        while (true){
+          while (true){
+            while (true){
+              int x;
+              return x==x;
+            }
+          }
+        }
+        return j;
+      }
+    }
+    return false;
+  }
+  return true;
+}
+void checkBreak(){
+  while (true){
+    while (true){
+      while (true){
+        while (true){
+          while (true){
+            while (true){
+              int x;
+              break;
+            }
+          }
+        }
+        break;
+      }
+    }break;
+  }
+
+}
+void checkContinue(){
+  while (true){
+    while (true){
+      while (true){
+        while (true){
+          while (true){
+            while (true){
+              int x;
+              continue;
+            }
+          }
+        }
+        continue;
+      }
+    }continue;
+  }
+}
+// check check check

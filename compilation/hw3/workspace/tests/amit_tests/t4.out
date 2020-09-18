@@ -1,0 +1,21 @@
+---end scope---
+preFunc - 2 preconditions
+x INT -1
+y INT -2
+---end scope---
+return6 - 1 preconditions
+---end scope---
+---end scope---
+x INT 1
+---end scope---
+---end scope---
+---end scope---
+---end scope---
+main - 0 preconditions
+c BOOL 0
+---end scope---
+print (STRING)->VOID 0
+printi (INT)->VOID 0
+preFunc (INT,INT)->BOOL 0
+return6 ()->INT 0
+main ()->VOID 0

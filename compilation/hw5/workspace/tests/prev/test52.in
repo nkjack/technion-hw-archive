@@ -1,0 +1,19 @@
+void maxTestsTestContinue() {
+	int x;
+	while(true) {
+		if (x == 10) {
+			break;
+		}
+		x = x + 1;
+		if (x / 2 == x - x / 2) {
+			continue;
+		}
+		printi(x);
+		print("\nx is odd\n");
+	}
+}
+
+void main() {
+     maxTestsTestContinue();
+     print("\nI hate this course\n");
+}

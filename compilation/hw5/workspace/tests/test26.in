@@ -1,0 +1,21 @@
+//func args
+int foo(int w, byte x, bool c, int y) {
+	printi(w);
+	print("\t");
+	printi(x);
+	print("\t");
+	if (c) print("true\t"); else print("false\t");
+	printi(y);
+	print("\n");
+	return 0;
+}
+
+void main() {
+	foo(4,7b,true,15);
+	foo(1b,6b,false,15);
+	byte x = 89b;
+	byte y = 0b;
+	bool z = true;
+	foo(x,y,z,x);
+	foo(x + 25,y - 53b,88 >= x, 125 * x * (y+12));
+}

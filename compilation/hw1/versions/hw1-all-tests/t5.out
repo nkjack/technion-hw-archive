@@ -1,0 +1,23 @@
+1 NAME table
+1 DOT .
+1 NAME itemstore_table
+1 NAME a
+1 DOT .
+1 NAME nostylebutton
+1 COLON :
+1 NAME link
+2 LBRACE {
+3 NAME text-decoration
+3 COLON :
+3 NAME none
+4 IMPORTANT !	
+					IMPortant
+4 SEMICOLON ;
+5 NAME color
+5 COLON :
+8 RGB rgb(	245	,
+				214	, 
+				93	
+			  )
+8 SEMICOLON ;
+9 RBRACE }

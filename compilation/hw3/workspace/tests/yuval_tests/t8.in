@@ -1,0 +1,8 @@
+void main(){
+  int x;
+}
+void checkBool(){
+  int x;
+  bool z = x;
+  x = z;
+}

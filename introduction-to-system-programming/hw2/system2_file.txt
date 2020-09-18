@@ -1,0 +1,14 @@
+BrainIt
+5
+Haifa  64  2
+Tel_Aviv  35  1
+Netanya  22  1
+Beer_Sheva  2  2
+Eilat  7  3
+6
+cow_boys  3  64  2  7
+magician_room  2  2  22
+space_station  5  35  64  22  2  7
+elm_street  1  35
+i_am_legend  4  35  2  7  64
+heroes  1  7

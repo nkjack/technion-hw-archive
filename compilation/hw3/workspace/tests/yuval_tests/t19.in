@@ -1,0 +1,12 @@
+void main(){
+  int x;
+}
+void checkWhile(){
+  int x;
+  while(x){
+    print("ok");
+    while(false){
+      int k;
+    }
+  }
+}

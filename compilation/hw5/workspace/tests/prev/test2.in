@@ -1,0 +1,12 @@
+void maxTestsBasicAssignmentTest2() {
+	int x = 3;
+	int y = 8;
+	printi(x);
+	print("\n");
+	printi(y);
+}
+
+void main() {
+     maxTestsBasicAssignmentTest2();
+     print("\nI hate this course\n");
+}

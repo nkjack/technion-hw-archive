@@ -1,0 +1,28 @@
+#ifndef __TOKENS__
+#define __TOKENS__
+
+enum tokens {
+	IMPORTANT = 20,
+	NAME,	
+	HASHID,
+	IMPORT,
+	STRING,
+	COMB,
+	COLON,
+	SEMICOLON,
+	COMMA,
+	LBRACE,
+	RBRACE,
+	LBRACKET,
+	RBRACKET,
+	EQUAL,
+	ASTERISK,
+	DOT,
+	NUMBER,
+	UNIT,
+	EF //EOF
+};
+
+
+
+#endif //__TOKENS__

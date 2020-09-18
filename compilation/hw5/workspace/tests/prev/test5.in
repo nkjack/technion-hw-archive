@@ -1,0 +1,13 @@
+void maxTestsDefineThenAssign() {
+	int x;
+	x = 5;
+	printi(x);
+	print("\n");
+	x = 7;
+	printi(x);
+}
+
+void main() {
+     maxTestsDefineThenAssign();
+     print("\nI hate this course\n");
+}

@@ -1,0 +1,13 @@
+void maxTestsWhile() {
+	int i = 0;
+	while (i < 10) {
+		printi(i);
+		print("\n");
+		i = i + 1;
+	}
+}
+
+void main() {
+     maxTestsWhile();
+     print("\nI hate this course\n");
+}

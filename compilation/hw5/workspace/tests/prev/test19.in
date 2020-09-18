@@ -1,0 +1,9 @@
+void maxTestsStressArithmetic() {
+	int x = 3 + 3 + 3 + 3 + 3 + 3 + 3 + 3 + 3 + 3 + 3 + 3 + 3 + 3 + 3 + 3 + 3 + 3 + 3 + 3 + 3 + 3;
+	printi(x);
+}
+
+void main() {
+     maxTestsStressArithmetic();
+     print("\nI hate this course\n");
+}

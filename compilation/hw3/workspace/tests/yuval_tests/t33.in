@@ -1,0 +1,23 @@
+void main(){
+  int x;
+}
+int checkVoidReturn(){
+  int x;
+  while (true){
+    while (true){
+      while (true){
+        while (true){
+          while (true){
+            while (true){
+              return;
+            }
+            return;
+          }
+        }
+      }
+      return;
+    }
+  }
+  return;
+  int y;
+}

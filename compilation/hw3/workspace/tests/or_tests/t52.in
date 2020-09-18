@@ -1,0 +1,7 @@
+void foo(int c){
+return;
+}
+
+void main(){
+foo(255b);
+}

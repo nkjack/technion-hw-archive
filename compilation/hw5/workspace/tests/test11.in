@@ -1,0 +1,44 @@
+void maxTestsBigTruncationTest() {
+	int t = 126b + 224b + 139 - 141b - 225b;
+	printi(t);
+	print("\n");
+	int s = 126b + 224b + 139b - 141b - 225b;
+	printi(s);
+	print("\n");
+}
+
+void foo(int x,int y)
+@pre(x < 0 or x > 10 and (x + y) < 20)
+@pre(x > 0)
+{
+	maxTestsBigTruncationTest();
+}
+
+bool TestFunc(int a,bool flag) {
+
+	int x = a;
+	while(true) {
+		printi(x);
+		x = x - 1;
+		if ( x >= 0) {
+			continue;
+		}
+		else {
+			break;
+		}
+	}
+	print("\n");
+	if (flag) {
+		foo(12,1);
+		return true;
+	}
+	else
+		return false;
+}
+void main() {
+	if (TestFunc(4,true)) {
+		print("GOOD TEST\n");
+	}
+	else 
+		print("BAD TEST\n");
+}

@@ -1,0 +1,22 @@
+void main(){
+  int x;
+}
+byte checkIntReturn(){
+  while (true){
+    while (true){
+      while (true){
+        while (true){
+          while (true){
+            while (true){
+              byte x;
+              return;
+            }
+          }
+        }
+        return 5b;
+      }
+    }
+    return 19;
+  }
+  return 5;
+}

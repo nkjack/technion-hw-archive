@@ -1,0 +1,11 @@
+void main(){
+  int x;
+}
+
+void checkInt(){
+  int x;
+  byte z = 6 b;
+  int y = 19;
+  y = z;
+  x = true;
+}

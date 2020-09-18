@@ -1,0 +1,20 @@
+void maxTestsBigTruncationTest() {
+	int t = 126b + 224b + 139 - 141b - 225b;
+	printi(t);
+	print("\n");
+	int s = 126b + 224b + 139b - 141b - 225b;
+	printi(s);
+	print("\n");
+}
+
+void foo(int x,int y)
+@pre((x > 0 or x < 10) and (x + y) < 20)
+@pre(x < 5)
+{
+	maxTestsBigTruncationTest();
+}
+
+void main() {
+     foo(5,14);
+     print("BAD TEST\n");
+}

@@ -1,0 +1,11 @@
+bool little(bool x, bool y, bool z, int a, int b1, int c, int d, int e, int f, bool w)
+{
+    printi(24);
+    return x and y and z and a < b1 and b1 < c and c < d and d <= e and e <= f and not w and x and y and z and not w and a + b1 <= a + b1 + c + d + e + f + 1;
+}
+
+void main()
+{
+    if (little(true,true,true,1,2,3,4,5,6,false))
+        print("ok\n");
+}

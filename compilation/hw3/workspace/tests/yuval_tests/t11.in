@@ -1,0 +1,14 @@
+void main(){
+  int x;
+}
+void checkRelop(){
+  int x;
+  byte z;
+  bool res;
+  res = x == z;
+  res = x != z;
+  res = x >= z;
+  res = x <= z;
+  res = x > z > z;
+  res = x < z;
+}

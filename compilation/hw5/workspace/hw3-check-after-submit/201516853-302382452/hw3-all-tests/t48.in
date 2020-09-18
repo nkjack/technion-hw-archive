@@ -1,0 +1,11 @@
+bool foo(int x)
+@pre((x != 0))
+{
+	return false;
+}
+
+void main()
+@pre(foo(1) or true)
+{
+	foo(1);
+}

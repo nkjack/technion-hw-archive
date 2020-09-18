@@ -1,0 +1,7 @@
+---end scope---
+preFunc - 2 preconditions
+x INT -1
+y INT -2
+---end scope---
+return6 - 1 preconditions
+Program has no 'void main()' function

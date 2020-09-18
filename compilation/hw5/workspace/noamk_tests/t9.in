@@ -1,0 +1,78 @@
+bool f1() {
+    print("ff1");
+    return true;
+}
+
+bool f2() {
+    print("ff2");
+    return false;
+}
+
+void foo(bool c) {
+    if (c) printi(1); else printi(0);
+    print("\n");
+}
+
+void main() {
+    if (f1() or f2()) {
+        print("or1 ok\n");
+    }
+
+    if (not f1() or f2()) {
+        print("or2 not ok\n");
+    }
+    else {
+        print("or2 ok\n");
+    }
+
+    if (f1() and f2()) {
+        print("and1 not ok\n");
+    }
+    else {
+        print("and1 ok\n");
+    }
+
+    if (f2() and f1()) {
+        print("should not print");
+    }
+
+    if (not( f2() and f1()) ) {
+        print("should print\n");
+    }
+
+    if (f2() or f1() and not f2())
+        print("aha!\n");
+        
+    if (f2() and f2() or f1())
+        print("yes\n");
+        
+    if (f1() or f2() and not f1())
+        print("no\n");
+        
+        
+    if (f1() or f1() and f2())
+        print("no\n");
+        
+    if (f1() or f1() and f2())
+        print("no\n");
+        
+    foo(f1() or f2());
+    foo(f2() or not f1());
+    foo(f1() and f1());
+    foo(not(f2() and f2()));
+    foo(f1() or not f1());
+    foo(f1() and not f2() or f1());
+
+    bool c1 = (f1() or f2());
+    bool c2 = (f2() or not f1());
+    bool c3 = (f1() and f1());
+    foo(c1);
+    foo(c2);
+    foo(c3);
+    c1 = not(f2() and f2());
+    c2 = f1() or not f1();
+    c3 = f1() and not f2() or f1();
+    foo(c1);
+    foo(c2);
+    foo(c3);
+}

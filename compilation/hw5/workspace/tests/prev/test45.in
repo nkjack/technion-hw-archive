@@ -1,0 +1,18 @@
+void maxTestsWhile() {
+	int i = 0;
+	while (i < 10) {
+		printi(i);
+		print("\n");
+		if (i / 2 == i - i / 2) {
+			printi(i);
+			print(" is even\n");
+		}
+		i = i + 1;
+	}
+}
+
+
+void main() {
+     maxTestsWhile();
+     print("\nI hate this course\n");
+}

@@ -1,0 +1,126 @@
+%{
+        #include <vector>       
+
+        vector<SymbolTable> scopes;
+        vector<FunctionTable> functionScopes;
+        vector<int> offsets;
+%}
+
+%token VOID
+%token INT
+%token BYTE
+%token B
+%token BOOL
+%token AND
+%token OR
+%token NOT
+%token TRUE
+%token FALSE
+%token RETURN
+%token IF
+%token ELSE
+%token WHILE
+%token BREAKE
+%token CONTINUE
+%token PRECOND
+%token SC
+%token COMMA
+%token LPAREN
+%token RPAREN
+%token LBRACE
+%token RBRACE
+%token ASSIGN
+%token RELOP
+%token BINOP
+%token ID
+%token NUM
+%token STRING
+
+
+%%
+
+//TODO - add addScope var
+
+Program:        Funcs {/*action - check that main exists and it is valid*/}
+;
+
+Funcs:          FuncDecl Funcs {/*action*/}
+                |
+;
+
+FuncDecl:       RetType ID LPAREN Formals RPAREN PreConditions LBRACE Statements RBRACE {/*action*/} 
+;
+
+RetType:        Type {/*action*/}
+                |VOID {/*action*/}
+;
+
+Formals:        FormalsList {/*action*/}
+                |
+;
+
+FormalsList:    FormalDecl {/*action*/}
+                |FormalDecl COMMA FormalsList {/*action*/}
+;
+
+//11
+FormalDecl:     Type ID {/*action*/}
+;
+
+PreConditions:  PreConditions PreCondition {/*action*/}
+                |
+;
+
+PreCondition:   PRECOND LPAREN Exp RPAREN {/*action*/}
+;
+
+Statements:     Statement {/*action*/}
+                |Statements Statement {/*action*/}
+;
+
+//17
+Statement:      LBRACE Statements RBRACE {/*action*/}
+                |Type ID SC {/*action*/}
+                |Type ID ASSIGN Exp SC {/*action*/}
+                |ID ASSIGN Exp SC {/*action*/}
+                |Call SC {/*action*/}
+                |RETURN SC {/*action*/}
+                |RETURN Exp SC {/*action*/}
+                |IF LPAREN Exp RPAREN Statement {/*action*/}
+                |IF LPAREN Exp RPAREN Statement ELSE Statement {/*action*/}
+                |WHILE LPAREN Exp RPAREN Statement {/*action*/}
+                |BREAK SC {/*action*/}
+                |CONTINUE SC {/*action*/}
+;
+
+//29
+Call:           ID LPAREN ExpList RPAREN {/*action*/}
+                |ID LPAREN RPAREN {/*action*/}
+;
+
+ExpList:        Exp {/*action*/}
+                |ExpList COMMA ExpList {/*action*/}
+;
+
+Type:           INT {/*action*/}
+                |BYTE {/*action*/}
+                |BOOL {/*action*/}
+;
+
+//36
+Exp:            LPAREN Exp RPAREN {/*action*/}
+                |Exp BINOP Exp {/*action*/}
+                |ID {/*action*/}
+                |Call {/*action*/}
+                |NUM {/*action*/}
+                |NUM B {/*action*/}
+                |STRING {/*action*/}
+                |TRUE {/*action*/}
+                |FALSE {/*action*/}
+                |NOT Exp {/*action*/}
+                |Exp AND Exp {/*action*/}
+                |Exp OR Exp {/*action*/}
+                |Exp RELOP Exp {/*action*/}
+;
+
+%%

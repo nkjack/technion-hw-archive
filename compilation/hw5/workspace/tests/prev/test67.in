@@ -1,0 +1,14 @@
+void Func(bool a, bool s, bool c, bool d) {
+	if (a) print("a\n");
+	if (s) print("b\n");
+	if (c) print("c\n");
+	if (d) print("d\n");
+}
+void maxTestsTestMultipleBooleans() {
+	Func(true, false, true, false);
+}
+
+void main() {
+     maxTestsTestMultipleBooleans();
+     print("\nI hate this course\n");
+}

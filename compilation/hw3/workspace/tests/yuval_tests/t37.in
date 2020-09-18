@@ -1,0 +1,7 @@
+void main(){
+  int x;
+}
+void checkBreak(){
+  break;
+  
+}

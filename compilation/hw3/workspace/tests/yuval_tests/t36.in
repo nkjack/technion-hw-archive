@@ -1,0 +1,22 @@
+void main(){
+  int x;
+}
+bool checkBoolReturn(bool j){
+  while (true){
+    while (true){
+      while (true){
+        while (true){
+          while (true){
+            while (true){
+              int x;
+              return x;
+            }
+          }
+        }
+        return j;
+      }
+    }
+    return false;
+  }
+  return true;
+}

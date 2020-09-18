@@ -1,0 +1,7 @@
+int a(){
+return 3;
+}
+
+void main(){
+byte c = a();
+}

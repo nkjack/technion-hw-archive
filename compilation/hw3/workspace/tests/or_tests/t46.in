@@ -1,0 +1,5 @@
+void main(){
+byte a=0b;
+a=255b;
+a=1b;
+}

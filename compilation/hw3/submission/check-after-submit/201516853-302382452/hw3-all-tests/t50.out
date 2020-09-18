@@ -1,0 +1,6 @@
+---end scope---
+f - 0 preconditions
+x INT -1
+---end scope---
+g - 0 preconditions
+line 10: syntax error

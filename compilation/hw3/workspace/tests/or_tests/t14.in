@@ -1,0 +1,9 @@
+int a(int c){
+return 3;
+}
+
+void main(){
+int t1 = 1;
+int t2 = 10;
+int c = a(t1+t2);
+}

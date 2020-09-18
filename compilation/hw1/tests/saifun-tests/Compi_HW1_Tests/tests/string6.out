@@ -1,0 +1,7 @@
+1 STRING Hello World!
+This	is	cool, as always.
+2 STRING Hello \57orld!\r\nThis\tis\t\63oo\00006C, as a\C0always.
+3 STRING From lowest to highest!~~~~~Q
+
+4 STRING This should be empty::
+Error unclosed string

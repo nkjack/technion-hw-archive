@@ -1,0 +1,21 @@
+1 NAME errors
+1 COMB >
+1 NAME and
+1 NAME more
+1 LBRACE {
+2 NAME syntax
+2 COLON :
+2 NUMBER 1
+2 DOT .
+2 UNIT 1.1px
+2 STRING /**/
+2 SEMICOLON ;
+3 NAME semantic
+3 COLON :
+3 NUMBER -0x0
+4 IMPORTANT !
+	important
+4 SEMICOLON ;
+5 NAME lexical
+5 COLON :
+Error !

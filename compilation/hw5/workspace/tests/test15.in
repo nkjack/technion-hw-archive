@@ -1,0 +1,21 @@
+void TestFunc() {
+	int t = 26b + 24b + 39 - 41b - 225b;
+	printi(t);
+	print("\n");
+	int s = 126b + 24b + 13b - 141b - 25b;
+	printi(s);
+	print("\n");
+}
+
+void foo(int x,int y,bool flag)
+@pre((x > 0 or x < 10) and (x + y) < 20)
+@pre(x < 5 or not flag)
+@pre(((x-x)+(y-y))==0)
+{
+	TestFunc();
+}
+
+void main() {
+     foo(1,14,false);
+     print("GOOD TEST\n");
+}

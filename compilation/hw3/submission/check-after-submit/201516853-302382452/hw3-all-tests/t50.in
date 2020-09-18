@@ -1,0 +1,13 @@
+void f(int x) {
+	printi(x);
+}
+
+int g() {
+	return 42;
+}
+
+void main()
+@pre()
+{
+	f(g());
+}

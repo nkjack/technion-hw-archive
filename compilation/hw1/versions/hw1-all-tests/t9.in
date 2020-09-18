@@ -1,0 +1,7 @@
+div[class]:strings {
+	string1: 'hE LL\6f';
+	string2: "w\6frld";
+	string3: 'hello "world"';
+	string4: "hello? 'world'";
+	string5: ' bad escape \'';
+}

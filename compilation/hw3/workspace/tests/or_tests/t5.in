@@ -1,0 +1,7 @@
+bool a(bool c, bool d){
+return c or d;
+}
+
+void main(){
+byte e = a(true, true);
+}

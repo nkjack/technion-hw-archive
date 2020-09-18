@@ -1,0 +1,11 @@
+---end scope---
+foo - 3 preconditions
+m INT -1
+n INT -2
+---end scope---
+main - 0 preconditions
+---end scope---
+print (STRING)->VOID 0
+printi (INT)->VOID 0
+foo (INT,INT)->INT 0
+main ()->VOID 0

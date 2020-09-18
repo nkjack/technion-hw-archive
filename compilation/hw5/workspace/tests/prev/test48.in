@@ -1,0 +1,16 @@
+int Func(int i) {
+	return i + 1;
+}
+void maxTestsCallFuncInWhile() {
+	int k;
+	while (k < 10) {
+		printi(k);
+		print("\n");
+		k = Func(k);
+	}
+}	
+
+void main() {
+     maxTestsCallFuncInWhile();
+     print("\nI hate this course\n");
+}

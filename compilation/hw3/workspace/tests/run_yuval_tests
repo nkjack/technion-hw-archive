@@ -1,0 +1,19 @@
+flag=1
+for file in `ls yuval_tests | grep -w "in" | cut -d"." -f1`; do
+	./hw3 < yuval_tests/${file}.in > yuval_tests/${file}
+temp_str=`diff yuval_tests/$file yuval_tests/${file}.out`
+if [ ${#temp_str} -ne 0 ]
+then
+str=$str"test $file fail:"$'\n'
+str=$str$temp_str$'\n'$'\n'
+flag=0
+fi
+done
+if [ $flag -ne 0 ]
+then
+str=$str$'\n'"\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*"$'\n'
+str=$str"\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\* PASS ALL TESTS \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*"$'\n'
+str=$str"\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*"$'\n'
+fi
+echo "$str"
+

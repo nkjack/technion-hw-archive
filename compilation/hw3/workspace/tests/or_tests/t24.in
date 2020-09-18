@@ -1,0 +1,11 @@
+bool foo(int c){
+return false;
+}
+
+int boo(){
+return foo(foo(3));
+}
+
+void main(){
+return;
+}

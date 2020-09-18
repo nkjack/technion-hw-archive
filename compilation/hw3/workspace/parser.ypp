@@ -1,0 +1,585 @@
+%{
+	#include "attributes.hpp"
+	#include "SymbolTable.hpp"
+	#include <iostream>
+	#include <vector>
+	#include "output.hpp"
+
+	using namespace std;
+	using namespace output;
+
+    SymbolTable symbolTable;
+    vector<int> offsets;
+    int inWhiles = 0;
+    int inIfs =0;
+    bool inFunction = false;
+    string retLastFunction;
+    int preCondCounter = 0;
+
+    extern int yylex();
+    extern int yylineno;
+	// #define YYDEBUG 1 
+	void yyerror(const char*);
+
+
+	void checkIfExpIsBool(Node* n, int yylineno){
+		if (n->types.size() == 0){
+			errorSyn(yylineno);
+			exit(1);
+		}
+
+		if (n->types[0] != "BOOL"){
+			errorMismatch(yylineno);
+			exit(1);
+		}
+	};
+
+
+	vector<string> argsTypesToStr(vector<string> args){
+		vector<string> args_s;
+
+		for (std::vector<string>::const_iterator it = args.begin(); 
+			        	it != args.end(); ++it){
+			args_s.push_back(*it);
+		}
+		return args_s;
+	}
+%}
+
+%token EF
+%token VOID
+%token INT
+%token BYTE
+%token B
+%token BOOL
+%token TRUE
+%token FALSE
+%token RETURN
+%nonassoc "then"
+%nonassoc ELSE
+%token IF
+%token WHILE
+%token BREAK
+%token CONTINUE
+%token PRECOND
+%token SC
+%token COMMA
+%token LBRACE
+%token RBRACE
+%token ID
+%token NUM
+%token STRING
+%left AND
+%left OR
+%token ASSIGN
+%nonassoc RELOP_EQ
+%nonassoc RELOP
+%left PLUS MINUS
+%left MULT DIV
+%right NOT
+%token LPAREN
+%token RPAREN
+
+%%
+program: M1 funcs EF
+		{	
+			// check if void main() is in tables if not error
+			if (!symbolTable.checkIfFunctionExists("main")){
+				errorMainMissing();
+				exit(1);
+			}
+			if (symbolTable.getFunctionRetType("main") != "VOID"){
+				errorMainMissing();
+				exit(1);	
+			}
+
+			vector<string> args = symbolTable.getFunctionArgs("main");
+			if (args.size() != 0){
+				errorMainMissing();
+				exit(1);		
+			}
+
+			endScope();
+
+			Table table = symbolTable.top();
+			for (int i=0; i< table.entries.size(); i++){
+
+				if (table.entries[i]->entry_type == "VARIABLE"){
+					printID(table.entries[i]->name, 
+							table.entries[i]->offset, 
+							table.entries[i]->type);
+				}
+				else if (table.entries[i]->entry_type == "FUNCTION"){
+					vector<string> args = argsTypesToStr(symbolTable.getFunctionArgs(table.entries[i]->name));
+					string type = makeFunctionType(table.entries[i]->ret_type, 
+													args);
+					printID(table.entries[i]->name, 
+							0, 
+							type);
+				}
+			}
+			symbolTable.pop();
+			offsets.pop_back();
+
+			return 0;
+		}
+;
+M1: /* epsilon */
+	{
+		symbolTable.maketable();
+		offsets.push_back(0);
+		symbolTable.insertFunctionPrint();
+		symbolTable.insertFunctionPrintI();
+		
+	}
+
+funcs:	funcdecl funcs
+		| /* epsilon */ 
+;
+funcdecl: retype ID LPAREN formals 
+		{
+			// initiate function
+			// add function to symbol table in current scope
+			// create new scope for function
+			// add arguments to new scope
+			preCondCounter = 0;
+			inFunction = true;
+			retLastFunction = $1->value;
+
+			if (symbolTable.checkIfIdExists($2->value)){
+    			errorDef(yylineno, $2->value);
+    			exit(1);
+			}
+
+
+			symbolTable.insertFunction($2->value, 
+										$1->value, 
+										offsets.back(),
+										$4->types);
+			offsets.back();
+
+			symbolTable.maketable();
+			offsets.push_back(offsets.back());
+
+
+			std::vector<string> args = symbolTable.getFunctionArgs($2->value);
+			for (int i=0; i<args.size(); i++){
+				symbolTable.insertVariable($4->names[i], $4->types[i], (i+1)*-1);
+			}
+
+		} 
+		  RPAREN preconditions LBRACE statements RBRACE 
+		{	
+			// check if last statment in statements is return type which similar to retype
+			endScope();
+			printPreconditions($2->value, preCondCounter);
+
+			Table table = symbolTable.top();
+			for (int i=0; i< table.entries.size(); i++){
+
+				printID(table.entries[i]->name, 
+						table.entries[i]->offset, 
+						table.entries[i]->type);
+			}
+
+			inFunction = false;
+			preCondCounter = 0;
+
+			symbolTable.pop();
+			offsets.pop_back();
+		}
+;
+retype: type {$$->types[0] = $1->value;}
+		| VOID { $$ = $1;}
+		;
+formals: formalslist {$$ = $1;}
+		| /*epsilon*/ {$$ = new Node();}
+;
+formalslist: formaldecl {
+				$$ = new Node();
+				$$->names.push_back($1->names[0]);
+				$$->types.push_back($1->types[0]);
+			}
+			| formaldecl COMMA formalslist {
+				$$ = new Node();
+				$$->names.push_back($1->names[0]);
+				$$->types.push_back($1->types[0]);
+				for (int i=0; i < $3->names.size(); ++i){
+					$$->names.push_back($3->names[i]);
+					$$->types.push_back($3->types[i]);
+				}
+			}
+;
+formaldecl: type ID 
+			{
+				$$ = new Node();
+				$$->names.push_back($2->names[0]);
+				$$->types.push_back($1->types[0]);
+			}
+;
+preconditions: preconditions precondition
+				| /*epsilon*/
+;
+precondition: PRECOND LPAREN exp RPAREN {
+				checkIfExpIsBool($3, yylineno);
+				preCondCounter += 1;
+			}
+;
+statements: statement 
+			| statements statement
+;
+statement: N LBRACE statements RBRACE {
+					endScope();
+
+					Table table = symbolTable.top();
+					for (int i=0; i< table.entries.size(); i++){
+						printID(table.entries[i]->name, 
+								table.entries[i]->offset, 
+								table.entries[i]->type);
+					}
+
+					symbolTable.pop();
+					offsets.pop_back();
+				}
+				| type ID SC {
+					// check if ID is not already exists
+					if (symbolTable.checkIfIdExists($2->names[0])){
+						errorDef(yylineno, $2->names[0]);
+						exit(1);
+					}
+					
+					// initiate ID in symbol table with type
+					symbolTable.insertVariable($2->names[0],$1->value,offsets.back());
+					offsets.back() += 1;
+
+					$$->types.push_back($1->value);
+					$$->names.push_back($2->value);
+
+				}
+				| type ID ASSIGN exp SC {
+					// check if ID is not already exists
+					if (symbolTable.checkIfIdExists($2->names[0])){
+						errorDef(yylineno, $2->names[0]);
+						exit(1);
+					}
+					
+					if ($4->types.size() == 0){
+						errorMismatch(yylineno);
+						exit(1);
+					}
+
+					// exp should have the same type unless it is byte to int
+					if ( $4->types[0] != $1->value){
+						if ($4->types[0] == "BYTE" && $1->value == "INT"){
+							symbolTable.insertVariable($2->names[0],$1->value,offsets.back());
+							offsets.back() += 1;
+						}
+						else{
+							errorMismatch(yylineno);
+							exit(1);
+						}
+					}
+					else{
+						symbolTable.insertVariable($2->names[0],$1->value,offsets.back());
+						offsets.back() += 1;
+					}
+
+				}
+				| ID ASSIGN exp SC {
+					// check if ID is exists
+					if (!symbolTable.checkIfVariableExists($1->names[0])){
+						errorUndef(yylineno, $2->names[0]);
+						exit(1);
+					}
+
+					$1->types.push_back(symbolTable.getIdType($1->names[0]));
+					// check id ID.type is equal to exp.type
+					if ($3->types.size() == 0){
+						errorMismatch(yylineno);
+						exit(1);
+					}
+					if ($1->types[0] != $3->types[0] && 
+						!($1->types[0] == "INT" && $3->types[0] =="BYTE")){
+							errorMismatch(yylineno);
+							exit(1);	
+						}
+					$$->types.push_back($1->types[0]);
+				}
+				| call SC {
+					// something to do here?
+				}
+				| RETURN SC {
+					// only for functions with VOID or else Mismatch
+					if (inFunction){
+						// checkif last declared function is of rettype VOID
+						if (retLastFunction != "VOID"){
+							errorMismatch(yylineno);
+							exit(1);
+						}
+					}
+
+				}
+				| RETURN exp SC{
+					// only for functions not in void or else Mismatch
+					if (inFunction){
+						// checkif last declared function is of rettype VOID
+
+						if ((retLastFunction == "VOID")){
+							errorMismatch(yylineno);
+							exit(1);
+						}
+						else if ((retLastFunction == "INT") && ($2->types[0] != "INT")&&
+							($2->types[0] != "BYTE") ){
+							errorMismatch(yylineno);
+							exit(1);
+						}
+						if ((retLastFunction == "BOOL") && ($2->types[0] != "BOOL") ){
+							errorMismatch(yylineno);
+							exit(1);
+						}
+						if ((retLastFunction == "BYTE") && ($2->types[0] != "BYTE")) {
+							errorMismatch(yylineno);
+							exit(1);
+						}
+						if ((retLastFunction == "STRING") && ($2->types[0] != "STRING") ){
+							errorMismatch(yylineno);
+							exit(1);
+						}
+					}
+				}
+				| BREAK SC {
+					// check if inside a while or forloop
+					// else UnexpectedBreak;
+
+					if (inWhiles == 0){
+						errorUnexpectedBreak(yylineno);
+						exit(1);
+					}
+				}
+				| CONTINUE SC {
+					// check if inside a while or forloop
+					// else UnexpectedContinue;
+					if (inWhiles == 0){
+						errorUnexpectedContinue(yylineno);
+						exit(1);
+					}
+				}
+				| IF_SCOPE %prec "then"
+				| IF_SCOPE ELSE_SCOPE
+				| WHILE_SCOPE %prec WHILE 
+;
+IF_SCOPE: M_IF_SCOPE IF LPAREN exp {checkIfExpIsBool($4, $4->line_num);} RPAREN statement 
+		{
+			symbolTable.pop();
+			offsets.pop_back();
+			endScope();
+		}
+;
+M_IF_SCOPE:  /*epsilon*/ { 
+			// std::cout << "start if scope" << std::endl;
+			symbolTable.maketable(); 
+			offsets.push_back(offsets.back());
+		}
+;
+WHILE_SCOPE: M_WHILE_SCOPE WHILE LPAREN exp {checkIfExpIsBool($4, $4->line_num);} RPAREN statement 
+			{
+				symbolTable.pop();
+				offsets.pop_back();
+				endScope();
+				inWhiles -= 1;
+			}
+;
+M_WHILE_SCOPE: /*epsilon*/ { 
+	// std::cout << "while if scope" << std::endl;
+	symbolTable.maketable(); 
+	offsets.push_back(offsets.back());
+	inWhiles += 1;
+}
+; 
+ELSE_SCOPE: ELSE M_ELSE_SCOPE statement {
+	symbolTable.pop();
+	offsets.pop_back();
+	endScope();
+}
+;
+M_ELSE_SCOPE: /*epsilon*/
+	{
+		symbolTable.maketable(); 
+		offsets.push_back(offsets.back());
+	}
+;
+N: /* epsilon */ {
+		symbolTable.maketable();
+		offsets.push_back(offsets.back());
+	}
+
+;
+
+call: ID LPAREN explist RPAREN
+	{
+		// call type is from Id type
+		// explist must fit the function from symbol table
+
+		if (!symbolTable.checkIfFunctionExists($1->names[0])){
+			errorUndefFunc(yylineno, $1->names[0]);
+			exit(1);
+		}
+		
+		string rettype = symbolTable.getFunctionRetType($1->names[0]);
+		std::vector<string> v_args = symbolTable.getFunctionArgs($1->names[0]);
+
+        vector<string> v_args_s = argsTypesToStr(symbolTable.getFunctionArgs($1->names[0]));
+		//check all arguments
+		if ($3->types.size() != v_args.size()){
+			// error
+			errorPrototypeMismatch(yylineno, $1->value, v_args_s);
+			exit(1);
+		}
+
+		for (int i=0; i< $3->types.size(); i++){
+			if (v_args[i] != $3->types[i]){
+				if ((v_args[i] == "INT") && ($3->types[i] == "BYTE")){
+					// do nothing
+				}
+				else{
+					errorPrototypeMismatch(yylineno, $1->value, v_args_s);
+					exit(1);
+				}
+			}
+		}
+
+		$$ = new Node();
+		string s_retype = rettype;
+		$$->types.push_back(s_retype);
+
+		//nothing if VOID
+		$$->nonterminal = "call";
+		$$->line_num = yylineno;
+
+
+	}
+	| ID LPAREN RPAREN
+	{
+		// call type is from Id type
+		// empty explist must fit the function from symbol table
+
+		if (!symbolTable.checkIfFunctionExists($1->names[0])){
+			errorUndefFunc(yylineno, $1->names[0]);
+			exit(1);
+		}
+
+		
+		string rettype = symbolTable.getFunctionRetType($1->names[0]);
+		std::vector<string> args = symbolTable.getFunctionArgs($1->names[0]);
+
+		vector<string> args_s = argsTypesToStr(symbolTable.getFunctionArgs($1->names[0]));
+		//check all arguments
+		if (args.size() != 0){
+			// error
+			errorPrototypeMismatch(yylineno, $1->value, args_s);
+			exit(1);
+		}
+
+		$$ = new Node();
+
+		if (rettype == "VOID"){
+			// do nothing
+		}
+		else{
+			$$->types.push_back(rettype);
+		}
+		
+		$$->nonterminal = "call";
+		$$->line_num = yylineno;
+	}
+;
+explist: exp { $$ = $1;}
+		| exp COMMA explist {
+			$$ = new Node();
+			$$->types.push_back($1->types[0]);
+
+			for (int i=0; i< $3->types.size(); ++i){
+				$$->types.push_back($3->types[i]);
+			}
+			$$->line_num = $1->line_num;
+		}
+;
+type: INT {$$ = $1; $$->line_num = yylineno;}//{$$.value = "int";}
+	| BYTE {$$ = $1; $$->line_num = yylineno;}//{$$.value = "byte";} //cannot represent value > 255
+	| BOOL {$$ = $1; $$->line_num = yylineno;}//{$$.value = "bool";} 
+;
+
+exp: LPAREN exp RPAREN { $$ = $1;}
+	| exp PLUS exp {
+		$$ = new BinOp($1, $3, "PLUS", yylineno);
+	}
+	| exp MINUS exp {
+		$$ = new BinOp($1, $3, "MINUS", yylineno);
+	}
+	| exp MULT exp {
+		$$ = new BinOp($1, $3, "MULT", yylineno);
+	}
+	| exp DIV exp {
+		$$ = new BinOp($1, $3, "DIV", yylineno);
+	}
+	| ID {
+		if (!symbolTable.checkIfVariableExists($1->names[0])){
+			errorUndef(yylineno, $1->names[0]);
+			exit(1);
+		}
+		string type = symbolTable.getIdType($1->names[0]);
+		$1->types.push_back(type);
+		$$ = $1;
+		$$->line_num = yylineno;
+	}
+	| call {
+		$$ = $1;
+		$$->line_num = yylineno;
+	}
+	| NUM {
+		$$ = $1;
+		$$->line_num = yylineno;
+	}
+	| NUM B {
+		$$ = new NumByte($1->value, yylineno);
+	}
+	| STRING {
+		$$ = $1; 
+		$$->line_num = yylineno;
+	}
+	| TRUE {
+		$$ = $1; 
+		$$->line_num = yylineno;
+	}
+	| FALSE {
+		$$ = $1; 
+		$$->line_num = yylineno;
+	}
+	| NOT exp {
+		$$ = new Not($2, yylineno);
+	}
+	| exp AND exp {
+		$$ = new BoolOp($1, $3, $2->value, yylineno);
+	}
+	| exp OR exp {
+		$$ = new BoolOp($1, $3, $2->value, yylineno);
+	}
+	| exp RELOP_EQ exp {
+		$$ = new Relop($1, $3, $2->value, yylineno);
+	}
+	| exp RELOP exp {
+		$$ = new Relop($1, $3, $2->value, yylineno);
+	}
+;
+
+%%
+
+int main() 
+{
+	return yyparse();
+}
+
+void yyerror(const char*) 
+{
+	errorSyn(yylineno);
+}

@@ -1,0 +1,71 @@
+%{
+	#include "attributes.h"
+	#include <iostream>
+	#include <stdlib.h>
+	typedef enum { OP_AND, OP_OR } opType;
+
+	using namespace std;
+
+	extern int yylex();
+	int yyerror(char * message);
+%}
+
+%token tklp tkrp
+%token<constVal> tkconst
+%left tkor
+%left tkand
+
+%type<exp> Exp
+
+%%
+
+S	:	Exp
+		{
+			cout<<"The expression's value is "<<$1.value<<endl;
+		}
+	;
+
+Exp	:	Exp tkand Exp	
+		{
+			$$.value = $1.value && $3.value;
+		}
+	|	Exp tkor Exp
+		{
+			$$.value = $1.value || $3.value;
+		}
+	|	tklp { cout <<"In the mid-rule semantic action after (\n"; } Exp
+		{
+			/* THIS IS A MID-RULE SEMANTIC ACTION */
+			/* Inside this action, you have access to all the symbols
+			   that precede it, in this case $1, $2 (the marker), $3.
+			   You do NOT have access to symbols that follow the action
+			   ($5). Remember that the mid-rule action will be
+			   translated to a variable, so it counts as one $. */
+			 cout<<"Before the ). Expression value = "<<$3.value<<endl;
+			}
+			/* This is the rest of the production: */
+ 			tkrp
+			/* And this is the end-rule semantic action: */
+		{
+			/* Note that what used to be $2 has become $3, because the
+			mid-rule semantic actions each count as a variable. */
+			$$ = $3;
+		}
+	|	tkconst
+		{
+			$$.value = $1;
+		}
+	;
+
+%%
+
+int main()
+{
+	yyparse();
+}
+
+int yyerror(char * message)
+{
+	cout<<"Parse error: "<<message<<endl;
+	exit(0);
+}

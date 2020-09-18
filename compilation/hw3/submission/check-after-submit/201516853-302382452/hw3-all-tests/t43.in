@@ -1,0 +1,10 @@
+int zzz(int Z, int Y)
+@pre(Y > 0)
+@pre(Y)
+{
+	return Z * Y / 2;
+}
+}
+void main() {
+	return;
+}

@@ -1,0 +1,26 @@
+void a(){
+return;
+}
+int foo(){
+return 3;
+}
+int foo1(){
+return foo();
+}
+int foo2(){
+return foo()+foo1();
+}
+int foo3(){
+int ab;
+return ab;
+}
+int foo4(){
+byte c;
+return c;
+}
+int foo5(int d){
+return d;
+}
+void main(){
+return;
+}

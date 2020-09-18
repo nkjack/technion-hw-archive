@@ -1,0 +1,12 @@
+// too large byte test
+void printOk(bool isOk) {
+    if (isOk) print("ok");
+}
+
+void main()
+{
+    int x = 4;
+    byte y = 256 b;
+    printOk(x>y);
+    int z;
+}

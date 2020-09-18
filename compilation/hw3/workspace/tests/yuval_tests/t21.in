@@ -1,0 +1,7 @@
+void main(){
+  int x;
+}
+void checkStringPrintPrinti(){
+  print(this is string);
+  printi(6);
+}

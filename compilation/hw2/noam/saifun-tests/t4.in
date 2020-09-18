@@ -1,0 +1,9 @@
+.class{
+other:test
+}
+
+{name="Term"}{
+lDec:25px
+}
+
+****** /*should be syntax error*/

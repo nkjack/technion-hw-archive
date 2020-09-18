@@ -1,0 +1,17 @@
+ExitRoom
+7
+best_time  14  2
+best_score  19  3
+What_a_mystery  35  1
+tut_ankh_amon  42  3
+ancient_mystery  77  3
+greek_mystery  23  1
+the_legend  5  2
+7
+museum  4  14  35  23  5  
+nuclear  3  19  35  77
+imaginarium  1  23
+daVinci  6  19  14  35  42  77  23
+pandora  2  5  42
+blackandwhite  4  14  42  19  5
+bankrobbery  3  35  23  5

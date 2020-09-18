@@ -1,0 +1,14 @@
+void main(){
+  int x;
+}
+void checkIf(){
+  bool x;
+  if(x){
+    print("ok");
+    if (false) printi(5);
+  }
+  if () printi(5);
+  else {
+    int t;
+  }
+}

@@ -1,0 +1,24 @@
+void maxTestsStructInsideFunc() {
+	int x;
+	int x1;
+	int y;
+	int y1;
+	byte t;
+	byte t1;
+	x = 15;
+	y = 3 - 115;
+	t = 33b;
+	x1 = x;
+	y1 = y;
+	t1 =t;
+	printi(x1);
+	print("\n");
+	printi(y1);
+	print("\n");
+	printi(t1);
+}
+
+void main() {
+     maxTestsStructInsideFunc();
+     print("\nI hate this course\n");
+}

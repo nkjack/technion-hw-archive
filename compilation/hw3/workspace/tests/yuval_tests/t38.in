@@ -1,0 +1,7 @@
+void main(){
+  int x;
+}
+void checkContinue(){
+    continue;
+}
+// check check check

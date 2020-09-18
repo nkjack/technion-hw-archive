@@ -1,0 +1,8 @@
+void main(){
+if (3==4) printi(3);
+bool a = true;
+bool c = true;
+bool d = a and c;
+bool e = d or a;
+if (e and d) printi(3+4);
+}

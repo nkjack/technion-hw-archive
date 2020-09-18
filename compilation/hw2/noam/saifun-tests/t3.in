@@ -1,0 +1,12 @@
+@import "this is string";
+@import "shahar shalev";
+@import "aviad shiber";
+
+*.compi {
+name:"shahar";
+age: 24;
+test: compi !imporTant;
+height:160cm;
+
+}
+
